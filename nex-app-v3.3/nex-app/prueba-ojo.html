@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba del Ojo · Nex</title>
+<style>
+body{font-family:-apple-system,Arial,sans-serif;background:#14161F;color:#EFE4CC;margin:0;padding:20px;font-size:18px}
+h1{font-size:24px;margin:0 0 10px}
+input{font-size:20px;padding:10px;border-radius:10px;border:1px solid #8C6D33;width:100%;max-width:420px;box-sizing:border-box}
+button{font-size:18px;padding:12px 18px;border-radius:12px;border:0;background:#C9A35B;color:#1B1408;font-weight:700;margin:8px 8px 0 0}
+.res{margin-top:14px;padding:12px;border-radius:10px;background:#1E2130;border:1px solid #3A3F55;white-space:pre-wrap}
+img{max-width:100%;margin-top:10px;border:2px solid #8C6D33;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>Prueba del Ojo</h1>
+<p>Escribid la dirección que sale en el Monitor serie (solo los números) y pulsad cada prueba.</p>
+<input id="ip" placeholder="10.80.194.61" inputmode="decimal">
+<div>
+  <button id="b1">Prueba 1 · fetch</button>
+  <button id="b2">Prueba 2 · imagen</button>
+</div>
+<div class="res" id="r1">Prueba 1: sin hacer</div>
+<div class="res" id="r2">Prueba 2: sin hacer</div>
+<img id="foto" alt="">
+<script>
+const ip=()=>document.getElementById("ip").value.trim();
+document.getElementById("ip").value=localStorage.getItem("nex_ojo_ip")||"";
+const r1=document.getElementById("r1"),r2=document.getElementById("r2"),foto=document.getElementById("foto");
+document.getElementById("b1").onclick=async()=>{localStorage.setItem("nex_ojo_ip",ip());r1.textContent="Prueba 1: probando…";
+  const t0=performance.now();
+  try{const r=await fetch("http://"+ip()+"/capture?t="+Date.now());const b=await r.blob();
+    foto.src=URL.createObjectURL(b);r1.textContent="Prueba 1: ✅ FUNCIONA · "+Math.round(b.size/1024)+" KB en "+((performance.now()-t0)/1000).toFixed(1)+" s";}
+  catch(e){r1.textContent="Prueba 1: ❌ BLOQUEADA · "+(e.message||e);}};
+document.getElementById("b2").onclick=()=>{localStorage.setItem("nex_ojo_ip",ip());r2.textContent="Prueba 2: probando…";
+  const t0=performance.now();const i=new Image();
+  i.onload=()=>{foto.src=i.src;r2.textContent="Prueba 2: ✅ SE VE LA IMAGEN · "+i.naturalWidth+"x"+i.naturalHeight+" en "+((performance.now()-t0)/1000).toFixed(1)+" s";
+    try{const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext("2d").drawImage(i,0,0);c.toDataURL();r2.textContent+=" · ✅ la app puede usarla";}
+    catch(e){r2.textContent+=" · ⚠️ se ve, pero la app no puede usarla ("+e.name+")";}};
+  i.onerror=()=>{r2.textContent="Prueba 2: ❌ BLOQUEADA (la imagen no carga)";};
+  i.crossOrigin="anonymous";i.src="http://"+ip()+"/capture?t="+Date.now();};
+</script>
+</body>
+</html>
