@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14161F">
+<title>Reclama tu carta del multiverso · Icosaria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+/* Formulario de Nex Multiverse Scan (lead magnet) · v1 · 01/10/2026
+   CONFIGURACIÓN: ver el bloque CONFIG del script al final. */
+:root{--noche:#14161F;--laton:#C9A35B;--laton-osc:#8C6D33;--pergamino:#EFE4CC;--tinta:#3B2A1E;--cian:#3FD0D4;--display:"Fraunces",Georgia,serif;--ui:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0B0A08 url(img/fondo-ciudad.jpg) center/cover fixed;color:var(--pergamino);font-family:var(--ui);font-size:17px;line-height:1.45;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 28px)}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+.logo{width:min(70vw,300px);filter:drop-shadow(0 4px 12px rgba(0,0,0,.7))}
+h1{font-family:var(--display);font-size:clamp(26px,7vw,34px);line-height:1.15;margin:0;text-shadow:0 2px 10px #000}
+.intro{display:flex;gap:12px;align-items:center;text-align:left}
+.intro img{width:96px;flex:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}
+.intro p{margin:0;text-shadow:0 1px 6px #000}
+form{width:100%;background:url(img/pergamino-ancho.jpg) center/cover;color:var(--tinta);border:3px solid var(--laton-osc);border-radius:18px;padding:22px 18px;
+  box-shadow:inset 0 0 40px rgba(90,60,20,.45),0 16px 40px rgba(0,0,0,.6);text-align:left;display:flex;flex-direction:column;gap:14px}
+label{font-weight:600;font-size:15px;display:flex;flex-direction:column;gap:6px}
+input[type=text],input[type=email],select{font:inherit;min-height:50px;border-radius:10px;border:1.5px solid #8C6D33;background:rgba(255,250,236,.9);padding:10px 12px;color:var(--tinta)}
+fieldset{border:none;padding:0;margin:0}
+.check{flex-direction:row;align-items:flex-start;gap:10px;font-weight:500;font-size:14px}
+.check input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:#8C6D33}
+.legal{font-size:12.5px;color:#4A3818;background:rgba(255,250,236,.6);border-radius:10px;padding:10px 12px}
+.legal a{color:#6E3A1A}
+.seccion{font-family:var(--display);font-size:18px;color:#6E3A1A;margin:4px 0 -4px}
+button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius:14px;border:1px solid #E3C685;cursor:pointer;color:#1B1408;
+  background:linear-gradient(180deg,#E3C685 0%,#C9A35B 45%,#9C7A3C 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 20px rgba(0,0,0,.4)}
+.redes{font-family:var(--display);font-size:19px;text-shadow:0 1px 8px #000}
+.redes b{color:var(--cian)}
+.error{background:#2A1422;border:1px solid #D23C8C;color:#F6C5DD;border-radius:12px;padding:10px 14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="img/isologotipo-sinmarco.png" alt="Icosaria">
+  <h1>Reclama tu carta del multiverso</h1>
+  <div class="intro"><img src="img/lumen/entusiasmado.png" alt="Lumen"><p>Lumen te mandó a un mundo equivocado… y Vela lo ha dibujado en tu carta. Déjanos tus datos y te la enviamos <b>gratis</b> a tu correo.</p></div>
+  <div class="error" id="aviso" hidden>Este enlace no tiene número de carta. Vuelve a escanear el código QR de la tablet de Nex.</div>
+
+  <form id="formulario" method="POST">
+    <div class="seccion">Tus datos de viajero</div>
+    <label>Nombre<input type="text" id="f_nombre" required autocomplete="given-name"></label>
+    <label>Correo electrónico<input type="email" id="f_email" required autocomplete="email"></label>
+    <label>Ciudad<input type="text" id="f_ciudad" autocomplete="address-level2"></label>
+
+    <div class="seccion">Tu lado friki</div>
+    <label>Tu personaje favorito<input type="text" id="f_personaje" placeholder="El que más te guste, de donde sea"></label>
+    <label>Tu universo favorito
+      <select id="f_universo">
+        <option value="">Elige uno</option><option>Anime y manga</option><option>Cómics y superhéroes</option><option>Videojuegos</option>
+        <option>Fantasía</option><option>Ciencia ficción</option><option>Disney y animación</option><option>Juegos de rol y de mesa</option><option>Otro</option>
+      </select></label>
+    <label>¿Haces cosplay?
+      <select id="f_cosplay">
+        <option value="">Elige una opción</option><option>Sí, siempre que puedo</option><option>A veces</option><option>Todavía no, pero quiero</option><option>No, pero me encanta verlos</option>
+      </select></label>
+
+    <fieldset>
+      <label class="check"><input type="checkbox" id="f_acepto" required> <span>He leído la información de protección de datos y acepto que Icosaria use mis datos y mi fotografía para enviarme mi carta.</span></label>
+    </fieldset>
+    <fieldset>
+      <label class="check"><input type="checkbox" id="f_novedades"> <span>Quiero recibir novedades de Icosaria: eventos, experiencias y sorpresas del multiverso. (Opcional)</span></label>
+    </fieldset>
+    <div class="legal" id="legal">
+      <b>Protección de datos.</b> Responsable: [RAZÓN SOCIAL Y NIF]. Finalidad: enviarte tu carta (incluye tu fotografía) y, solo si lo marcas, novedades de Icosaria. Base: tu consentimiento. Tus datos se guardan en Brevo y tu carta en Cloudinary. Borraremos tu fotografía [en 30 días]. Puedes ejercer tus derechos escribiendo a [CORREO DE CONTACTO]. Si tienes menos de 14 años, necesitas el consentimiento de tu madre, padre o tutor.
+    </div>
+    <button type="submit">¡Envíame mi carta!</button>
+  </form>
+
+  <p class="redes">Mientras llega, síguenos en <b>@icosaria</b><br>en Instagram y TikTok</p>
+</main>
+
+<script>
+/* ====== CONFIG: rellenar con los datos del formulario de Brevo (ver guía) ====== */
+const CONFIG = {
+  accion: "PEGAR_AQUI_LA_URL_ACTION_DEL_FORMULARIO_DE_BREVO",  // atributo action="" del código HTML del formulario de Brevo
+  campos: {                // nombre de cada campo en Brevo (atributo name="" del código HTML)
+    email: "EMAIL",
+    nombre: "NOMBRE",
+    ciudad: "CIUDAD",
+    personaje: "PERSONAJE_FAVORITO",
+    universo: "UNIVERSO_FAVORITO",
+    cosplay: "COSPLAYER",
+    codigo: "CODIGO_CARTA",
+    novedades: "NOVEDADES",
+    acepto: "OPT_IN"
+  },
+  extras: { locale: "es", html_type: "simple" }   // campos ocultos que añade Brevo
+};
+/* ============================================================================ */
+const codigo = new URLSearchParams(location.search).get("c") || "";
+if(!/^\d{4}-[A-Z0-9]{6}$/.test(codigo)) document.getElementById("aviso").hidden = false;
+const f = document.getElementById("formulario");
+f.addEventListener("submit", e => {
+  e.preventDefault();
+  if(!f.reportValidity()) return;
+  if(CONFIG.accion.startsWith("PEGAR")){ alert("El formulario todavía no está conectado con Brevo."); return; }
+  const real = document.createElement("form");
+  real.method = "POST"; real.action = CONFIG.accion; real.style.display = "none";
+  const add = (n, v) => { if(!n) return; const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; real.appendChild(i); };
+  const v = id => document.getElementById(id).value.trim();
+  add(CONFIG.campos.email, v("f_email"));
+  add(CONFIG.campos.nombre, v("f_nombre"));
+  add(CONFIG.campos.ciudad, v("f_ciudad"));
+  add(CONFIG.campos.personaje, v("f_personaje"));
+  add(CONFIG.campos.universo, v("f_universo"));
+  add(CONFIG.campos.cosplay, v("f_cosplay"));
+  add(CONFIG.campos.codigo, codigo);
+  add(CONFIG.campos.novedades, document.getElementById("f_novedades").checked ? "true" : "false");
+  add(CONFIG.campos.acepto, "1");
+  Object.entries(CONFIG.extras).forEach(([n, val]) => add(n, val));
+  document.body.appendChild(real); real.submit();
+});
+</script>
+</body>
+</html>

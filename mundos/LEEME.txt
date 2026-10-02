@@ -1,0 +1,7 @@
+Poned aqui los fondos de Firefly (APG-TEC-004) con estos nombres exactos:
+  mundo-purpurina-01.jpg, mundo-purpurina-02.jpg, mundo-purpurina-03.jpg
+  mundo-tramites-01.jpg, mundo-pantano-01.jpg, mundo-autolavado-01.jpg,
+  mundo-peluches-01.jpg, mundo-museo-01.jpg, mundo-biblioteca-01.jpg, mundo-invernadero-01.jpg (y sus -02, -03)
+Elementos que se cuelan (PNG sin fondo), uno por mundo:
+  elemento-purpurina-01.png, elemento-tramites-01.png, ...
+Si falta un fondo, la app usa un degradado con los colores del mundo.
