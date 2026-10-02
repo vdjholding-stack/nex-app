@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.3</title>
+<title>Nex Multiverse Scan · v3.5</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -311,25 +311,63 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
       s.onResults(r=>{if(pendiente){const p=pendiente;pendiente=null;p(r);}});await s.initialize();return s;})()
       .catch(e=>{console.warn("segmentador",e);listo=null;return null;});return listo;}
   window.precargarSegmentador=()=>preparar();
+  function enviar(s,src){return new Promise((ok,ko)=>{pendiente=ok;s.send({image:src}).catch(ko);setTimeout(()=>ko(new Error("tiempo de recorte agotado")),9000);});}
+  /* Lee la máscara (canal rojo = confianza) a una rejilla mw x mh */
+  function leerMascara(m,mw,mh){const c=document.createElement("canvas");c.width=mw;c.height=mh;const x=c.getContext("2d");x.drawImage(m,0,0,mw,mh);
+    const d=x.getImageData(0,0,mw,mh).data;const f=new Float32Array(mw*mh);for(let i=0;i<mw*mh;i++)f[i]=d[i*4]/255;return f;}
+  /* Limpieza: se queda con la figura más grande y rellena sus huecos */
+  function limpiar(conf,mw,mh,umbral){const n=mw*mh,bin=new Uint8Array(n);for(let i=0;i<n;i++)bin[i]=conf[i]>umbral?1:0;
+    const etq=new Int32Array(n);let mejor=0,mejorTam=0,actual=0;const pila=new Int32Array(n);
+    for(let i=0;i<n;i++){if(!bin[i]||etq[i])continue;actual++;let tam=0,sp=0;pila[sp++]=i;etq[i]=actual;
+      while(sp){const k=pila[--sp];tam++;const x=k%mw,y=(k/mw)|0;
+        if(x>0&&bin[k-1]&&!etq[k-1]){etq[k-1]=actual;pila[sp++]=k-1;}if(x<mw-1&&bin[k+1]&&!etq[k+1]){etq[k+1]=actual;pila[sp++]=k+1;}
+        if(y>0&&bin[k-mw]&&!etq[k-mw]){etq[k-mw]=actual;pila[sp++]=k-mw;}if(y<mh-1&&bin[k+mw]&&!etq[k+mw]){etq[k+mw]=actual;pila[sp++]=k+mw;}}
+      if(tam>mejorTam){mejorTam=tam;mejor=actual;}}
+    if(!mejor)return null;const keep=new Uint8Array(n);for(let i=0;i<n;i++)keep[i]=etq[i]===mejor?1:0;
+    /* rellenar huecos: lo que no se alcanza desde el borde por el fondo es parte de la figura */
+    const fuera=new Uint8Array(n);let sp=0;const push=k=>{if(!keep[k]&&!fuera[k]){fuera[k]=1;pila[sp++]=k;}};
+    for(let x=0;x<mw;x++){push(x);push((mh-1)*mw+x);}for(let y=0;y<mh;y++){push(y*mw);push(y*mw+mw-1);}
+    while(sp){const k=pila[--sp];const x=k%mw,y=(k/mw)|0;if(x>0)push(k-1);if(x<mw-1)push(k+1);if(y>0)push(k-mw);if(y<mh-1)push(k+mw);}
+    let minX=mw,minY=mh,maxX=0,maxY=0,area=0;for(let i=0;i<n;i++){if(!fuera[i])keep[i]=1;if(keep[i]){area++;const x=i%mw,y=(i/mw)|0;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}
+    return {keep,area,minX,minY,maxX,maxY};}
+  const suave=(a,b,v)=>{const t=Math.min(1,Math.max(0,(v-a)/(b-a)));return t*t*(3-2*t);};
   window.recortarPersona=async function(img){try{const s=await preparar();if(!s)return null;
     const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
-    const r=await new Promise((ok,ko)=>{pendiente=ok;s.send({image:img}).catch(ko);setTimeout(()=>ko(new Error("tiempo de recorte agotado")),9000);});
-    const m=r.segmentationMask;const mw=256,mh=Math.round(256*H/W);
-    const mc=document.createElement("canvas");mc.width=mw;mc.height=mh;const mx=mc.getContext("2d");mx.drawImage(m,0,0,mw,mh);
-    const id=mx.getImageData(0,0,mw,mh);const d=id.data;let minX=mw,minY=mh,maxX=0,maxY=0,area=0;
-    for(let i=0;i<mw*mh;i++){const conf=d[i*4]/255;const a=Math.min(1,Math.max(0,(conf-0.35)/0.35));const v=Math.round(a*255);
-      d[i*4]=255;d[i*4+1]=255;d[i*4+2]=255;d[i*4+3]=v;
-      if(v>128){area++;const x=i%mw,y=(i/mw)|0;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}
-    /* Controles de calidad: si la máscara no parece una persona, se usa el marco */
-    const bw=maxX-minX,bh=maxY-minY;
-    if(area<mw*mh*0.04||bh<mh*0.30||bw<mw*0.10||bh<bw*0.5||area<bw*bh*0.25)return null;
+    /* Pasada 1: imagen completa, para localizar a la persona */
+    const r1=await enviar(s,img);const mw1=256,mh1=Math.round(256*H/W);const c1=leerMascara(r1.segmentationMask,mw1,mh1);
+    const l1=limpiar(c1,mw1,mh1,0.5);if(!l1)return null;
+    const bw=l1.maxX-l1.minX,bh=l1.maxY-l1.minY;
+    if(l1.area<mw1*mh1*0.03||bh<mh1*0.25||bw<mw1*0.08||bh<bw*0.5||l1.area<bw*bh*0.25)return null;
+    /* Pasada 2: recorte alrededor de la persona, para que el modelo la vea grande y afine el borde */
+    const ex=bw*0.14,et=bh*0.08,eb=bh*0.05;
+    const cx=Math.max(0,Math.floor((l1.minX-ex)/mw1*W)),cy=Math.max(0,Math.floor((l1.minY-et)/mh1*H));
+    const cx2=Math.min(W,Math.ceil((l1.maxX+ex)/mw1*W)),cy2=Math.min(H,Math.ceil((l1.maxY+eb)/mh1*H));const cw=cx2-cx,ch=cy2-cy;
+    const crop=document.createElement("canvas");crop.width=cw;crop.height=ch;const cxx=crop.getContext("2d");cxx.drawImage(img,cx,cy,cw,ch,0,0,cw,ch);
+    const mw2=Math.min(384,Math.max(160,Math.round(320*Math.min(1,cw/ch)))),mh2=Math.round(mw2*ch/cw);
+    let conf,l2=null;try{const r2=await enviar(s,crop);conf=leerMascara(r2.segmentationMask,mw2,mh2);l2=limpiar(conf,mw2,mh2,0.5);}catch(e){}
+    if(!l2||l2.area<mw2*mh2*0.12){/* si la segunda pasada sale peor, se usa la primera recortada */
+      conf=new Float32Array(mw2*mh2);for(let y=0;y<mh2;y++)for(let x=0;x<mw2;x++){const sx=Math.min(mw1-1,Math.floor((cx+x/mw2*cw)/W*mw1)),sy=Math.min(mh1-1,Math.floor((cy+y/mh2*ch)/H*mh1));conf[y*mw2+x]=c1[sy*mw1+sx];}
+      l2=limpiar(conf,mw2,mh2,0.5);if(!l2)return null;}
+    /* Máscara final: borde nítido, sin manchas sueltas, huecos rellenos */
+    const mc=document.createElement("canvas");mc.width=mw2;mc.height=mh2;const mx=mc.getContext("2d");const id=mx.createImageData(mw2,mh2);
+    let A=new Float32Array(mw2*mh2);for(let i=0;i<mw2*mh2;i++){if(!l2.keep[i])continue;A[i]=conf[i]<0.5?0.9:suave(0.4,0.85,conf[i]);}
+    /* erosión: estrecha el contorno unos píxeles para no arrastrar el fondo original */
+    const pasos=Math.max(1,Math.round(mw2/140));for(let k=0;k<pasos;k++){const B=new Float32Array(A.length);
+      for(let y=0;y<mh2;y++)for(let x=0;x<mw2;x++){let m=A[y*mw2+x];if(m>0){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;
+        const v=(xx<0||yy<0||xx>=mw2||yy>=mh2)?(yy>=mh2?m:0):A[yy*mw2+xx];if(v<m)m=v;}}B[y*mw2+x]=m;}A=B;}
+    for(let i=0;i<mw2*mh2;i++){id.data[i*4]=255;id.data[i*4+1]=255;id.data[i*4+2]=255;id.data[i*4+3]=Math.round(A[i]*255);}
     mx.putImageData(id,0,0);
-    const out=document.createElement("canvas");out.width=W;out.height=H;const o=out.getContext("2d");
-    o.drawImage(img,0,0,W,H);o.globalCompositeOperation="destination-in";o.imageSmoothingEnabled=true;o.imageSmoothingQuality="high";
-    try{o.filter="blur(2px)";}catch(e){}o.drawImage(mc,0,0,W,H);o.filter="none";o.globalCompositeOperation="source-over";
-    const pad=0.02,bx=Math.max(0,Math.floor((minX/mw-pad)*W)),by=Math.max(0,Math.floor((minY/mh-pad)*H)),bx2=Math.min(W,Math.ceil((maxX/mw+pad)*W)),by2=Math.min(H,Math.ceil((maxY/mh+pad)*H));
-    const crop=document.createElement("canvas");crop.width=bx2-bx;crop.height=by2-by;crop.getContext("2d").drawImage(out,bx,by,crop.width,crop.height,0,0,crop.width,crop.height);
-    return crop;}catch(e){console.warn("recorte",e);return null;}};
+    const out=document.createElement("canvas");out.width=cw;out.height=ch;const o=out.getContext("2d");o.imageSmoothingEnabled=true;o.imageSmoothingQuality="high";
+    try{o.filter="blur("+Math.max(1,Math.round(cw/500))+"px)";}catch(e){}o.drawImage(mc,0,0,cw,ch);o.filter="none";
+    /* Contraer un poco el borde para quitar el halo del fondo original */
+    const md=o.getImageData(0,0,cw,ch);const pd=cxx.getImageData(0,0,cw,ch);
+    for(let i=0;i<cw*ch;i++){const a=md.data[i*4+3]/255;const a2=Math.min(1,Math.max(0,(a-0.35)/0.55));pd.data[i*4+3]=Math.round(a2*255);}
+    o.putImageData(pd,0,0);
+    /* Ajustar al contorno de la persona */
+    const sx=cw/mw2,sy=ch/mh2;const bx=Math.max(0,Math.floor(l2.minX*sx-4)),by=Math.max(0,Math.floor(l2.minY*sy-4)),bx2=Math.min(cw,Math.ceil((l2.maxX+1)*sx+4)),by2=Math.min(ch,Math.ceil((l2.maxY+1)*sy+4));
+    const fin=document.createElement("canvas");fin.width=bx2-bx;fin.height=by2-by;fin.getContext("2d").drawImage(out,bx,by,fin.width,fin.height,0,0,fin.width,fin.height);
+    fin.tocaAbajo=(cy+by2)>=H-Math.max(4,H*0.02); /* la persona sale cortada por abajo en la foto */
+    return fin;}catch(e){console.warn("recorte",e);return null;}};
 })();
 </script>
 <script src="catalogo.js"></script>
@@ -444,11 +482,11 @@ $("btnGuardar").onclick=()=>{const k=$("inKey").value.trim();if(!k&&!get(LS.key)
 let ojoOcupado=false,usarIpadUnaVez=false;
 $("btnEscanear").onclick=async()=>{const lim=parseInt(get(LS.limite)||"60");
   if(escaneosUltimaHora()>=lim){mostrarError(`Se ha llegado al límite de ${lim} escaneos por hora. Esperad un poco o subid el límite en Ajustes.`);return;}
-  const ojo=(get(LS.ojo)||"").trim();
+  const ojo=(get(LS.ojo)||"").trim()||(desdeElOjo()?location.host:"");
   if(ojo&&!usarIpadUnaVez){if(ojoOcupado)return;ojoOcupado=true;$("btnEscanear").classList.add("disparando");$("contador").textContent="El Ojo está escaneando…";
     const f=await fotoDelOjo(ojo);ojoOcupado=false;$("btnEscanear").classList.remove("disparando");
     if(f){actualizarContador();analizar(f);return;}
-    usarIpadUnaVez=true;$("contador").textContent=location.protocol==="https:"?"El Ojo solo funciona abriendo la app en http://ojo.icosaria.com · Toca otra vez para usar la cámara del iPad":"El Ojo no responde · Toca otra vez para usar la cámara del iPad";return;}
+    usarIpadUnaVez=true;$("contador").textContent=location.protocol==="https:"?"El Ojo solo funciona abriendo la app desde http://ojo.local/nex · Toca otra vez para usar la cámara del iPad":"El Ojo no responde · Toca otra vez para usar la cámara del iPad";return;}
   usarIpadUnaVez=false;$("camara").value="";$("camara").click();};
 /* ===== El Ojo (placa XIAO ESP32S3 con CameraWebServer) ===== */
 async function pedirFoto(host,ms){const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),ms);
@@ -456,6 +494,8 @@ async function pedirFoto(host,ms){const ctrl=new AbortController();const to=setT
 async function girarBlob(blob,grados){if(!grados)return blob;const img=await cargarImg(URL.createObjectURL(blob));if(!img)return blob;
   const c=document.createElement("canvas");const lado=grados%180!==0;c.width=lado?img.height:img.width;c.height=lado?img.width:img.height;const x=c.getContext("2d");
   x.translate(c.width/2,c.height/2);x.rotate(grados*Math.PI/180);x.drawImage(img,-img.width/2,-img.height/2);return await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.92));}
+/* La app se abre desde la propia placa (http://ojo.local/nex): así Safari no la pasa a https y puede leer la foto */
+function desdeElOjo(){return location.protocol==="http:"&&location.pathname.startsWith("/nex");}
 async function fotoDelOjo(host){if(location.protocol==="https:")return null;
   try{try{await pedirFoto(host,5000);}catch(e){} /* la primera foto puede ser antigua: se descarta */
     let b=await pedirFoto(host,7000);b=await girarBlob(b,parseInt(get(LS.giro)||"0"));return new File([b],"ojo.jpg",{type:"image/jpeg"});}
@@ -526,7 +566,7 @@ function mostrarResultado(r){
 function boton(txt,cls,fn){const b=document.createElement("button");b.className="btn "+cls;b.textContent=txt;b.onclick=fn;return b;}
 $("btnOtro").onclick=()=>{$("otroBox").hidden=false;$("inOtro").focus();};
 $("btnOtroOk").onclick=()=>{const v=$("inOtro").value.trim();if(!v){$("inOtro").focus();return;}confirmar(v,"otro");};
-$("btnRepetir").onclick=()=>{registrar("repetir","");$("camara").value="";$("camara").click();};
+$("btnRepetir").onclick=()=>{registrar("repetir","");usarIpadUnaVez=false;$("btnEscanear").onclick();};
 
 /* ===== Ficha ===== */
 function confirmar(nombre,resultado){
@@ -582,11 +622,30 @@ function portal(ctx,cx,cy,rx,ry,foto){
   const lw=Math.max(8,rx*0.06);ctx.save();const g=ctx.createLinearGradient(cx-rx,cy-ry,cx+rx,cy+ry);g.addColorStop(0,"#E3C685");g.addColorStop(0.4,"#8C6D33");g.addColorStop(0.7,"#D7B46B");g.addColorStop(1,"#6E5426");
   ctx.lineWidth=lw;ctx.strokeStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,rx+lw/2,ry+lw/2,0,0,Math.PI*2);ctx.stroke();
   ctx.lineWidth=Math.max(2,lw*0.25);ctx.strokeStyle="rgba(63,208,212,.85)";ctx.shadowColor="#3FD0D4";ctx.shadowBlur=lw*1.5;ctx.beginPath();ctx.ellipse(cx,cy,rx+1,ry+1,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
-function persona(ctx,x,y,w,h){const r=estado.recorte;const esc=Math.min(w/r.width,h/r.height);const dw=r.width*esc,dh=r.height*esc;const dx=x+(w-dw)/2,dy=y+h-dh;
-  ctx.save();const g=ctx.createRadialGradient(x+w/2,y+h-4,4,x+w/2,y+h-4,dw*0.55);g.addColorStop(0,"rgba(0,0,0,.55)");g.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+w/2,y+h-4,dw*0.55,Math.max(10,dh*0.05),0,0,Math.PI*2);ctx.fill();ctx.restore();
-  ctx.save();ctx.shadowColor="rgba(63,208,212,.6)";ctx.shadowBlur=Math.max(12,w*0.03);ctx.drawImage(r,dx,dy,dw,dh);ctx.restore();ctx.drawImage(r,dx,dy,dw,dh);
-  ctx.save();for(let i=0;i<5;i++){const yy=dy+Math.random()*dh;const hh=3+Math.random()*8;ctx.globalAlpha=0.35;ctx.fillStyle=i%2?"#D23C8C":"#3FD0D4";ctx.fillRect(dx-6+Math.random()*12,yy,dw*(0.15+Math.random()*0.2),hh);}ctx.restore();}
+function persona(ctx,x,y,w,h,fondoAbajo){const r=estado.recorte;
+  /* si la persona sale cortada por abajo, se ancla al borde inferior para que el corte no se vea */
+  const abajo=r.tocaAbajo&&fondoAbajo?fondoAbajo:y+h;const hh=abajo-y;
+  const esc=Math.min(w/r.width,hh/r.height);const dw=Math.round(r.width*esc),dh=Math.round(r.height*esc);const dx=Math.round(x+(w-dw)/2),dy=Math.round(abajo-dh);
+  /* 1 · igualar luz y color con el mundo */
+  const t=document.createElement("canvas");t.width=dw;t.height=dh;const tx=t.getContext("2d");tx.imageSmoothingQuality="high";tx.drawImage(r,0,0,dw,dh);
+  try{const bg=ctx.getImageData(Math.max(0,dx),Math.max(0,dy),Math.max(1,Math.min(dw,ctx.canvas.width-dx)),Math.max(1,Math.min(dh,ctx.canvas.height-dy))).data;
+    let br=0,bgc=0,bb=0,nb=0;for(let i=0;i<bg.length;i+=64){br+=bg[i];bgc+=bg[i+1];bb+=bg[i+2];nb++;}br/=nb;bgc/=nb;bb/=nb;
+    const pd=tx.getImageData(0,0,dw,dh);const d=pd.data;let pr=0,pg=0,pb=0,np=0;for(let i=0;i<d.length;i+=16){if(d[i+3]>200){pr+=d[i];pg+=d[i+1];pb+=d[i+2];np++;}}
+    if(np>50){pr/=np;pg/=np;pb/=np;const lp=0.299*pr+0.587*pg+0.114*pb,lb=0.299*br+0.587*bgc+0.114*bb;
+      const gan=Math.min(1.2,Math.max(0.78,(lp*0.7+lb*0.3)/Math.max(1,lp)));const k=0.12;
+      for(let i=0;i<d.length;i+=4){if(!d[i+3])continue;d[i]=Math.min(255,d[i]*gan*(1-k)+br*k);d[i+1]=Math.min(255,d[i+1]*gan*(1-k)+bgc*k);d[i+2]=Math.min(255,d[i+2]*gan*(1-k)+bb*k);}
+      tx.putImageData(pd,0,0);}
+    /* 2 · luz envolvente: el fondo se "cuela" suavemente en el borde */
+    const env=document.createElement("canvas");env.width=dw;env.height=dh;const ex=env.getContext("2d");try{ex.filter="blur("+Math.max(6,Math.round(dw/40))+"px)";}catch(e){}
+    ex.drawImage(ctx.canvas,dx,dy,dw,dh,0,0,dw,dh);ex.filter="none";tx.save();tx.globalCompositeOperation="source-atop";tx.globalAlpha=0.16;tx.drawImage(env,0,0);tx.restore();}catch(e){}
+  /* 3 · sombra en el suelo (solo si se ven los pies) */
+  if(!(r.tocaAbajo&&fondoAbajo)){ctx.save();const g=ctx.createRadialGradient(dx+dw/2,abajo-2,2,dx+dw/2,abajo-2,dw*0.5);g.addColorStop(0,"rgba(0,0,0,.6)");g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(dx+dw/2,abajo-2,dw*0.5,Math.max(8,dh*0.035),0,0,Math.PI*2);ctx.fill();ctx.restore();}
+  /* 4 · persona con un leve brillo del color del mundo */
+  const acento=(estado.mundo&&estado.mundo.colores&&estado.mundo.colores[1])||"#3FD0D4";
+  ctx.save();ctx.shadowColor=acento;ctx.shadowBlur=Math.max(8,dw*0.03);ctx.globalAlpha=0.55;ctx.drawImage(t,dx,dy);ctx.restore();ctx.drawImage(t,dx,dy);
+  /* 5 · toque de glitch, muy discreto */
+  ctx.save();for(let i=0;i<3;i++){const yy=dy+Math.random()*dh*0.9;const hh2=2+Math.random()*4;ctx.globalAlpha=0.22;ctx.fillStyle=i%2?"#D23C8C":"#3FD0D4";ctx.fillRect(dx-4+Math.random()*8,yy,dw*(0.08+Math.random()*0.12),hh2);}ctx.restore();}
 function marco9(ctx,img,x,y,w,h,src,dst){if(!img)return;const W=img.width,H=img.height,s=src,d=dst;
   const S=[[0,s,0,d],[s,W-2*s,d,w-2*d],[W-s,s,w-d,d]],T=[[0,s,0,d],[s,H-2*s,d,h-2*d],[H-s,s,h-d,d]];
   for(const [sx,sw,dx,dw] of S)for(const [sy,sh,dy,dh] of T){if(sx===s&&sy===s)continue;ctx.drawImage(img,sx,sy,sw,sh,x+dx,y+dy,dw,dh);}}
@@ -599,7 +658,7 @@ const numEd=()=>"Nº "+String(estado.edicion).padStart(4,"0");
 function dibujarPortal(){const c=$("cvPortal"),ctx=c.getContext("2d"),m=estado.mundo,W=1080,H=1350;
   ctx.clearRect(0,0,W,H);fondoMundo(ctx,m,0,0,W,H);
   const g=ctx.createLinearGradient(0,H*0.62,0,H);g.addColorStop(0,"rgba(20,22,31,0)");g.addColorStop(1,"rgba(20,22,31,.92)");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  if(estado.recorte)persona(ctx,90,200,900,920);else portal(ctx,W/2,655,320,415,estado.fotoImg);
+  if(estado.recorte)persona(ctx,90,200,900,920,H);else portal(ctx,W/2,655,320,415,estado.fotoImg);
   if(m.elemento){const ew=300,eh=m.elemento.height*ew/m.elemento.width;ctx.drawImage(m.elemento,110,1030-eh,ew,eh);}
   if(IMG.isologo){const w=300,h=IMG.isologo.height*w/IMG.isologo.width;ctx.drawImage(IMG.isologo,W/2-w/2,18,w,h);}
   ctx.font="700 56px Fraunces, Georgia, serif";const dos=ctx.measureText(m.nombre).width>960;
@@ -611,7 +670,7 @@ function dibujarAnverso(){const c=$("cvAnverso"),ctx=c.getContext("2d"),m=estado
   ctx.clearRect(0,0,W,H);if(IMG.noche)cubrir(ctx,IMG.noche,0,0,W,H,0.5);else{ctx.fillStyle="#14161F";ctx.fillRect(0,0,W,H);}
   if(IMG.isologo){const w=330,h=IMG.isologo.height*w/IMG.isologo.width;ctx.drawImage(IMG.isologo,W/2-w/2,40,w,h);}
   const vx=64,vy=225,vw=W-128,vh=500;ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();fondoMundo(ctx,m,vx,vy,vw,vh);ctx.restore();
-  if(estado.recorte){ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();persona(ctx,vx+20,vy+18,vw-40,vh-18);ctx.restore();}else portal(ctx,W/2,vy+vh/2,160,215,estado.fotoImg);
+  if(estado.recorte){ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();persona(ctx,vx+20,vy+18,vw-40,vh-18,vy+vh);ctx.restore();}else portal(ctx,W/2,vy+vh/2,160,215,estado.fotoImg);
   ctx.save();ctx.lineWidth=3;ctx.strokeStyle="#8C6D33";ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.stroke();ctx.restore();
   let y=texto(ctx,m.nombre,W/2,790,"700 34px Fraunces, Georgia, serif","#EFE4CC",W-120);
   const clase=CLASES[e.tono]||CLASES.epico;
@@ -694,8 +753,8 @@ $("btnAjustes").onclick=()=>{const d=datos(),n=d.length,c=t=>d.filter(x=>x.resul
 $("btnVolver").onclick=()=>arrancar();
 $("btnCompartirCartas").onclick=compartirCartas;
 $("btnSubirPendientes").onclick=subirPendientes;
-$("btnProbarOjo").onclick=async()=>{const h=(get(LS.ojo)||"").trim();if(!h){alert("Escribid la dirección del Ojo en «Cambiar clave, modelo o límites».");return;}
-  if(location.protocol==="https:"){alert("Estáis en la versión https. El Ojo solo funciona abriendo la app en http://ojo.icosaria.com");return;}
+$("btnProbarOjo").onclick=async()=>{const h=(get(LS.ojo)||"").trim()||(desdeElOjo()?location.host:"");if(!h){alert("Escribid la dirección del Ojo en «Cambiar clave, modelo o límites».");return;}
+  if(location.protocol==="https:"){alert("Estáis en la versión https. El Ojo solo funciona abriendo la app desde la placa: http://ojo.local/nex");return;}
   const t0=performance.now();try{let b=await pedirFoto(h,8000);b=await girarBlob(b,parseInt(get(LS.giro)||"0"));const i=$("ojoPrueba");i.src=URL.createObjectURL(b);i.hidden=false;
     alert(`✅ El Ojo responde: ${Math.round(b.size/1024)} KB en ${((performance.now()-t0)/1000).toFixed(1)} s`);}catch(e){alert("❌ El Ojo no responde ("+(e.name==="AbortError"?"tiempo agotado":e.message)+"). Comprobad que la placa está encendida, en la red Icosaria, y la dirección.");}};
 $("btnBorrarCartas").onclick=async()=>{if(confirm("¿Borrar las cartas guardadas en este iPad? Hacedlo solo después de haberlas enviado.")){await borrarCartas();$("btnAjustes").onclick();}};
