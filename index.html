@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.5</title>
+<title>Nex Multiverse Scan · v3.7</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,6 +35,7 @@ h1{font-size:clamp(34px,6vw,54px);line-height:1.08}
 h2{font-size:clamp(26px,4.4vw,38px);line-height:1.15}
 p{margin:0;max-width:40ch;color:var(--tinta)}
 .small{font-size:15px;color:#A99F8B}
+.sel{width:100%;max-width:520px;min-height:56px;border-radius:12px;border:1px solid #3A3F55;background:#0F1119;color:var(--pergamino);padding:12px 14px;font-size:18px}
 .top-bar{position:fixed;top:calc(env(safe-area-inset-top) + 10px);right:calc(env(safe-area-inset-right) + 12px);z-index:5}
 .icon-btn{width:48px;height:48px;border-radius:50%;border:1px solid #3A3F55;background:rgba(20,22,31,.7);color:var(--laton);font-size:22px;cursor:pointer}
 .btn{min-height:60px;padding:14px 26px;border-radius:14px;border:1px solid var(--laton-osc);background:var(--noche-2);color:var(--pergamino);font-size:20px;cursor:pointer;width:100%;max-width:520px}
@@ -84,6 +85,20 @@ p{margin:0;max-width:40ch;color:var(--tinta)}
 .barras{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 2px,transparent 2px 5px)}
 /* Imágenes compuestas */
 canvas.vista{width:min(88vw,520px);height:auto;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+canvas.carta-vista{width:min(62vw,40vh);border-radius:16px}
+.precio{font-family:var(--display);font-size:46px;color:var(--laton);line-height:1}
+.metodos{display:flex;gap:10px;width:100%;max-width:520px}.metodos .btn{flex:1;font-size:18px;padding:12px 8px}
+.metodos .btn.sel{background:linear-gradient(180deg,#E3C685,#C9A35B 45%,#9C7A3C);color:#1B1408}
+.pago-info{background:#0F1119;border:1px solid #3A3F55;border-radius:14px;padding:14px 16px;max-width:520px;width:100%;font-size:19px}
+.pago-info b{color:var(--cian)}
+.pago-info canvas{display:block;margin:10px auto 0;width:min(46vw,240px);height:auto;border-radius:10px}
+.cola{width:100%;max-width:640px;display:flex;flex-direction:column;gap:10px}
+.cola .item{display:flex;gap:12px;align-items:center;background:#0F1119;border:1px solid #3A3F55;border-radius:14px;padding:10px}
+.cola img{width:64px;border-radius:6px;flex:none}
+.cola .txt{flex:1;text-align:left;font-size:16px}.cola .txt b{font-size:18px}
+.cola .item .btn{width:auto;min-height:48px;font-size:16px;padding:8px 14px}
+.est{display:inline-block;border-radius:8px;padding:1px 8px;font-size:13px;margin-left:6px}
+.est.pend{background:#4A2A12;color:#F3C38A}.est.pag{background:#123A2A;color:#8AF3C3}.est.imp{background:#1E2A44;color:#9CC1FF}
 .cartas{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 .qr-marco{background:#F4EBD6;padding:18px;border-radius:16px;border:4px solid #8C6D33;box-shadow:0 0 0 3px #2A2418,0 0 30px rgba(63,208,212,.35),0 18px 40px rgba(0,0,0,.6)}
 .qr-marco canvas{display:block;width:min(56vw,46vh);height:auto;image-rendering:pixelated}
@@ -164,7 +179,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 
 <section class="screen bg bg-noche" id="s-config">
   <img class="logo-mini" src="img/isologotipo-sinmarco.png" alt="Icosaria">
-  <h2>Configurar el Ojo</h2>
+  <h2>Configurar Nex</h2>
   <p>Pegad la clave de la API de Gemini. Se guarda solo en este iPad.</p>
   <label for="inKey">Clave de la API de Gemini</label>
   <input id="inKey" type="password" autocomplete="off" placeholder="Pegad aquí la clave (vacío = mantener la actual)">
@@ -178,22 +193,38 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <input id="inNube" type="text" autocomplete="off" placeholder="p. ej. icosaria">
   <label for="inPreset">Cloudinary: upload preset sin firmar</label>
   <input id="inPreset" type="text" autocomplete="off" placeholder="p. ej. nex_cartas">
-  <label for="inOjo">El Ojo: dirección de la cámara (vacío = usar la cámara del iPad)</label>
+  <label for="inFuente">Origen de la foto</label>
+  <select id="inFuente" class="sel">
+    <option value="canon">Cámara Canon (elegir la foto en Fotos)</option>
+    <option value="ipad">Cámara del iPad</option>
+    <option value="ojo">El Ojo (placa con cámara)</option></select>
+  <label for="inPrecio">Precio de la fotocarta impresa (€)</label>
+  <input id="inPrecio" type="number" min="0" step="0.5" placeholder="p. ej. 5">
+  <label for="inBizum">Bizum: número de teléfono donde cobráis</label>
+  <input id="inBizum" type="tel" autocomplete="off" placeholder="p. ej. 600 000 000">
+  <label for="inLinkPago">Tarjeta: enlace de pago (SumUp, Stripe…) · opcional, se muestra como QR</label>
+  <input id="inLinkPago" type="url" autocomplete="off" autocapitalize="off" placeholder="https://…">
+  <label for="inMargen">Impresión SELPHY: margen de seguridad (mm)</label>
+  <input id="inMargen" type="number" min="0" max="5" step="0.5" value="1.5">
+  <div class="fila"><div style="flex:1"><label for="inImpX">Ajuste horizontal (mm)</label><input id="inImpX" type="number" min="-3" max="3" step="0.5" value="0"></div>
+    <div style="flex:1"><label for="inImpY">Ajuste vertical (mm)</label><input id="inImpY" type="number" min="-3" max="3" step="0.5" value="0"></div></div>
+  <label for="inOjo">El Ojo: dirección de la cámara (solo si el origen es «El Ojo»)</label>
   <input id="inOjo" type="text" autocomplete="off" autocapitalize="off" placeholder="ojo.local  o  10.80.194.61">
   <label for="inGiro">El Ojo: girar la foto</label>
-  <select id="inGiro" style="width:100%;max-width:520px;min-height:56px;border-radius:12px;border:1px solid #3A3F55;background:#0F1119;color:var(--pergamino);padding:12px 14px;font-size:18px">
+  <select id="inGiro" class="sel">
     <option value="0">No girar</option><option value="90">90° a la derecha</option><option value="180">180°</option><option value="270">90° a la izquierda</option></select>
   <label for="inFormBase">Dirección segura del formulario (https)</label>
-  <input id="inFormBase" type="text" autocomplete="off" autocapitalize="off" placeholder="https://soft-sable-1774ef.netlify.app/">
+  <input id="inFormBase" type="text" autocomplete="off" autocapitalize="off" placeholder="https://ojo.icosaria.com/">
   <div class="stack"><button class="btn primary" id="btnGuardar">Guardar y empezar</button></div>
 </section>
 
 <section class="screen bg" id="s-inicio">
   <img class="lumen-img lumen-peek" src="img/lumen/feliz.png" alt="Lumen">
   <button class="ojo" id="btnEscanear" aria-label="Escanear"></button>
-  <div class="ojo-label">Escanear</div>
+  <div class="ojo-label" id="ojoLabel">Escanear</div>
   <p class="small" id="contador"></p>
   <input id="camara" type="file" accept="image/*" capture="environment" hidden>
+  <input id="fototeca" type="file" accept="image/jpeg,image/heic,image/*" hidden>
 </section>
 
 <section class="screen bg" id="s-analizando">
@@ -248,10 +279,11 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 
 <section class="screen bg bg-ciudad" id="s-portal">
   <div class="fila-lumen"><img class="lumen-img reaccion" src="img/lumen/avergonzado.png" alt="Lumen"><h2 id="pTitulo">¡Error de rumbo!</h2></div>
-  <canvas class="vista" id="cvPortal" width="1080" height="1350"></canvas>
+  <canvas class="vista carta-vista" id="cvVista" width="638" height="1016"></canvas>
+  <canvas id="cvPortal" width="1080" height="1350" hidden></canvas>
   <div class="cita" id="pFrase"></div>
   <div class="stack">
-    <button class="btn primary" id="btnEnviarCarta">Enviar la carta</button>
+    <button class="btn primary" id="btnEnviarCarta">Recibir la carta</button>
   </div>
 </section>
 
@@ -264,9 +296,33 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <p class="redes">Compártela y etiquétanos en <b>@icosaria</b></p>
   <div class="small" id="qrEstado"></div>
   <div class="stack">
-    <button class="btn primary" id="btnNuevo">Nuevo escaneo</button>
+    <button class="btn primary" id="btnImprimir">🖨 Quiero mi fotocarta impresa</button>
+    <button class="btn" id="btnNuevo">Nuevo escaneo</button>
   </div>
-  <div hidden><canvas id="cvAnverso" width="638" height="1016"></canvas><canvas id="cvReverso" width="638" height="1016"></canvas></div>
+  <div hidden><canvas id="cvAnverso" width="638" height="1016"></canvas><canvas id="cvReverso" width="638" height="1016"></canvas><canvas id="cvImp" width="638" height="1016"></canvas></div>
+</section>
+
+<section class="screen bg bg-noche" id="s-cobro">
+  <img class="logo-mini" src="img/isologotipo-sinmarco.png" alt="Icosaria">
+  <h2>Tu fotocarta impresa</h2>
+  <canvas class="vista carta-vista" id="cvCobro" width="638" height="1016" style="width:min(38vw,26vh)"></canvas>
+  <div class="qr-num" id="cobroNum"></div>
+  <div class="precio" id="cobroPrecio"></div>
+  <div class="metodos"><button class="btn" data-m="efectivo">💶 Efectivo</button><button class="btn" data-m="bizum">📱 Bizum</button><button class="btn" data-m="tarjeta">💳 Tarjeta</button></div>
+  <div class="pago-info" id="pagoInfo" hidden></div>
+  <div class="stack">
+    <button class="btn primary" id="btnCobrado" disabled>✅ Pago recibido · Imprimir</button>
+    <button class="btn ghost" id="btnPagoLuego">Dejar en la cola (pagará más tarde)</button>
+    <button class="btn ghost" id="btnCobroVolver">Volver</button>
+  </div>
+  <p class="small">Imprimir: Compartir → «Imprimir» → Canon SELPHY CP1500 · papel tarjeta 54 × 86 mm</p>
+</section>
+
+<section class="screen bg bg-noche" id="s-cola">
+  <h2>Cola de impresión</h2>
+  <p class="small" id="colaResumen"></p>
+  <div class="cola" id="colaLista"></div>
+  <div class="stack"><button class="btn primary" id="btnColaVolver">Volver</button></div>
 </section>
 
 <section class="screen bg bg-noche" id="s-error">
@@ -287,6 +343,8 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
     <div class="stack">
       <button class="btn" id="btnExportar">Descargar datos (CSV)</button>
       <button class="btn" id="btnCambiarClave">Cambiar clave, modelo o límites</button>
+      <button class="btn primary" id="btnCola">🖨 Cola de impresión y ventas</button>
+      <button class="btn" id="btnPruebaImp">Imprimir carta de calibración</button>
       <button class="btn" id="btnProbarOjo">Probar el Ojo</button>
       <img id="ojoPrueba" alt="" style="max-width:100%;border-radius:10px;border:2px solid #8C6D33" hidden>
       <button class="btn" id="btnSubirPendientes">Subir las cartas pendientes</button>
@@ -374,8 +432,8 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 <script src="qrcode.js"></script>
 <script>
 /* ===== Configuración ===== */
-const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir"};
-const UMBRAL_ALTO=0.8, UMBRAL_MEDIO=0.5, TIMEOUT_MS=20000, LADO_MAX=1600;
+const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir",fuente:"nex_fuente",impMargen:"nex_imp_margen",impX:"nex_imp_x",impY:"nex_imp_y",impresas:"nex_impresas",precio:"nex_precio",bizum:"nex_bizum",linkPago:"nex_link_pago"};
+const UMBRAL_ALTO=0.8, UMBRAL_MEDIO=0.5, TIMEOUT_MS=20000, LADO_MAX=2400; /* fotos de la Canon EOS 2000D: se reducen a 2400 px de lado */
 
 /* Los 8 mundos (APG-TEC-004) y sus frases (APG-TEC-005). Fondos opcionales en mundos/<slug>-01.jpg … -03.jpg */
 const MUNDOS=[
@@ -448,7 +506,10 @@ function pantalla(id){document.querySelectorAll(".screen").forEach(s=>s.classLis
 function datos(){try{return JSON.parse(get(LS.datos)||"[]")}catch(e){return[]}}
 function guardarDato(d){const a=datos();a.push(d);set(LS.datos,JSON.stringify(a));}
 function escaneosUltimaHora(){const h=Date.now()-3600e3;return datos().filter(d=>new Date(d.fecha).getTime()>h).length;}
-function actualizarContador(){const n=datos().length;$("contador").textContent=n?`${n} escaneos registrados en este iPad`:"Tocad el Ojo para escanear";}
+function fuente(){return get(LS.fuente)||(desdeElOjo()?"ojo":"canon");}
+function actualizarContador(){const n=datos().length,f=fuente();
+  const pista=f==="canon"?"Haced la foto con la Canon y tocad el Ojo para elegirla":f==="ojo"?"Tocad el Ojo para escanear":"Tocad el Ojo para hacer la foto con el iPad";
+  $("contador").textContent=(n?`${n} escaneos · `:"")+pista;const l=$("ojoLabel");if(l)l.textContent=f==="canon"?"Escanear foto":"Escanear";}
 
 /* Índice del catálogo por nombre y alias */
 const INDICE={};
@@ -473,16 +534,20 @@ let estado={};
 
 /* ===== Inicio y configuración ===== */
 function arrancar(){ if(!get(LS.key)){abrirConfig();} else {actualizarContador();pantalla("s-inicio");} }
-function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";pantalla("s-config");}
+function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";pantalla("s-config");}
 $("btnGuardar").onclick=()=>{const k=$("inKey").value.trim();if(!k&&!get(LS.key)){$("inKey").focus();return;}
   if(k)set(LS.key,k);set(LS.model,$("inModel").value.trim()||"gemini-3.6-flash");
   set(LS.limite,String(Math.max(1,parseInt($("inLimite").value)||60)));set(LS.repetir,String(Math.min(7,Math.max(0,parseInt($("inRepetir").value)||4))));set(LS.nube,$("inNube").value.trim());set(LS.preset,$("inPreset").value.trim());
   set(LS.ojo,$("inOjo").value.trim().replace(/^https?:\/\//,"").replace(/\/.*$/,""));set(LS.giro,$("inGiro").value);set(LS.formBase,$("inFormBase").value.trim());
+  set(LS.fuente,$("inFuente").value);const num=(v,a,b,d)=>{const x=parseFloat(String(v).replace(",","."));return String(isNaN(x)?d:Math.min(b,Math.max(a,x)));};
+  set(LS.impMargen,num($("inMargen").value,0,5,1.5));set(LS.impX,num($("inImpX").value,-3,3,0));set(LS.impY,num($("inImpY").value,-3,3,0));set(LS.precio,$("inPrecio").value.trim()?num($("inPrecio").value,0,999,0):"");set(LS.bizum,$("inBizum").value.trim());set(LS.linkPago,$("inLinkPago").value.trim());
   $("inKey").value="";arrancar();};
 let ojoOcupado=false,usarIpadUnaVez=false;
 $("btnEscanear").onclick=async()=>{const lim=parseInt(get(LS.limite)||"60");
   if(escaneosUltimaHora()>=lim){mostrarError(`Se ha llegado al límite de ${lim} escaneos por hora. Esperad un poco o subid el límite en Ajustes.`);return;}
-  const ojo=(get(LS.ojo)||"").trim()||(desdeElOjo()?location.host:"");
+  const f=fuente();
+  if(f==="canon"){$("fototeca").value="";$("fototeca").click();return;}
+  const ojo=f==="ojo"?((get(LS.ojo)||"").trim()||(desdeElOjo()?location.host:"")):"";
   if(ojo&&!usarIpadUnaVez){if(ojoOcupado)return;ojoOcupado=true;$("btnEscanear").classList.add("disparando");$("contador").textContent="El Ojo está escaneando…";
     const f=await fotoDelOjo(ojo);ojoOcupado=false;$("btnEscanear").classList.remove("disparando");
     if(f){actualizarContador();analizar(f);return;}
@@ -501,11 +566,12 @@ async function fotoDelOjo(host){if(location.protocol==="https:")return null;
     let b=await pedirFoto(host,7000);b=await girarBlob(b,parseInt(get(LS.giro)||"0"));return new File([b],"ojo.jpg",{type:"image/jpeg"});}
   catch(e){console.warn("Ojo",e);return null;}}
 $("camara").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)analizar(f);};
+$("fototeca").onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)analizar(f);};
 
 function reducir(file){return new Promise((ok,ko)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const esc=Math.min(1,LADO_MAX/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");
     c.width=Math.round(img.naturalWidth*esc);c.height=Math.round(img.naturalHeight*esc);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-    URL.revokeObjectURL(url);ok({dataUrl:c.toDataURL("image/jpeg",0.88),canvas:c});};
+    URL.revokeObjectURL(url);ok({dataUrl:c.toDataURL("image/jpeg",0.92),canvas:c});};
   img.onerror=()=>{URL.revokeObjectURL(url);ko(new Error("No se ha podido leer la foto."));};img.src=url;});}
 function versionIA(canvas){const esc=Math.min(1,1024/Math.max(canvas.width,canvas.height));const c=document.createElement("canvas");
   c.width=Math.round(canvas.width*esc);c.height=Math.round(canvas.height*esc);c.getContext("2d").drawImage(canvas,0,0,c.width,c.height);return c.toDataURL("image/jpeg",0.85).split(",")[1];}
@@ -692,9 +758,9 @@ function dibujarReverso(){const c=$("cvReverso"),ctx=c.getContext("2d"),W=638,H=
   texto(ctx,numEd(),W/2,H-58,"600 17px -apple-system, Arial, sans-serif","#6E5426",W-120);
   marco9(ctx,IMG.marco,0,0,W,H,120,70);}
 
-async function mostrarPortal(){if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
+async function mostrarPortal(){if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();dibujarAnverso();$("cvVista").getContext("2d").drawImage($("cvAnverso"),0,0);$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
 function nuevoCodigo(ed){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let r="";const v=new Uint32Array(6);crypto.getRandomValues(v);for(const x of v)r+=a[x%a.length];return String(ed).padStart(4,"0")+"-"+r;}
-const FORM_POR_DEFECTO="https://soft-sable-1774ef.netlify.app/";
+const FORM_POR_DEFECTO="https://ojo.icosaria.com/";
 function baseFormulario(){let b=(get(LS.formBase)||"").trim();if(!b)b=location.protocol==="https:"?location.origin+location.pathname.replace(/[^/]*$/,""):FORM_POR_DEFECTO;return b.endsWith("/")?b:b+"/";}
 function enlaceFormulario(){if(!estado.codigo)return "";return baseFormulario()+"registro.html?c="+encodeURIComponent(estado.codigo);}
 function dibujarQR(canvas,texto,margen){const ctx=canvas.getContext("2d"),W=canvas.width;ctx.fillStyle="#F4EBD6";ctx.fillRect(0,0,W,W);if(!texto||typeof qrcode==="undefined")return false;
@@ -703,6 +769,79 @@ function dibujarQR(canvas,texto,margen){const ctx=canvas.getContext("2d"),W=canv
 $("btnEnviarCarta").onclick=async()=>{dibujarAnverso();const url=enlaceFormulario();
   dibujarQR($("cvQR"),url,24);$("qrNum").textContent="Tu carta: "+numEd();$("qrEstado").textContent="";pantalla("s-qr");
   await guardarCarta();subirCarta(estado.codigo).then(ok=>{$("qrEstado").textContent=ok===true?"✓ Carta lista para enviarse":ok===false?"La carta se subirá más tarde (sin conexión)":"";});};
+
+/* ===== Impresión en la Canon SELPHY CP1500 (papel tamaño tarjeta 54 × 86 mm, 300 ppp = 638 × 1016 px) =====
+   La carta se envía al menú Compartir del iPad → Imprimir (AirPrint) → SELPHY CP1500.
+   El margen de seguridad encoge la carta para que la impresión sin bordes no corte el marco. */
+const PPMM=300/25.4;
+function dibujarImpresion(origen){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.width,H=c.height;
+  const m=parseFloat(get(LS.impMargen)??"1.5")||0,dx=(parseFloat(get(LS.impX)||"0")||0)*PPMM,dy=(parseFloat(get(LS.impY)||"0")||0)*PPMM;
+  ctx.clearRect(0,0,W,H);if(IMG.noche)cubrir(ctx,IMG.noche,0,0,W,H,0.5);else{ctx.fillStyle="#14161F";ctx.fillRect(0,0,W,H);}
+  const s=Math.min((W-2*m*PPMM)/W,(H-2*m*PPMM)/H),w=W*s,h=H*s;ctx.imageSmoothingQuality="high";ctx.drawImage(origen,(W-w)/2+dx,(H-h)/2+dy,w,h);return c;}
+function marcarImpresa(ed){const a=datos();let ok=false;for(let i=a.length-1;i>=0;i--){if(String(a[i].edicion)===String(ed)){a[i].impresa=(parseInt(a[i].impresa)||0)+1;ok=true;break;}}
+  if(ok)set(LS.datos,JSON.stringify(a));set(LS.impresas,String((parseInt(get(LS.impresas)||"0")||0)+1));}
+async function enviarAImprimir(canvas,nombre){const blob=await new Promise(ok=>canvas.toBlob(ok,"image/jpeg",0.97));const file=new File([blob],nombre,{type:"image/jpeg"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return true;}catch(e){return false;}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;document.body.appendChild(a);a.click();a.remove();return true;}
+/* ===== Cobro e impresión: cada carta guardada en el iPad es un pedido (Nº de carta = referencia del pago) ===== */
+const euros=v=>(Math.round((parseFloat(v)||0)*100)/100).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+async function leerReg(ed){const db=await abrirDB();return await new Promise(ok=>{const q=db.transaction("cartas").objectStore("cartas").get(ed);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null);});}
+async function guardarReg(reg){const db=await abrirDB();await new Promise(ok=>{const tx=db.transaction("cartas","readwrite");tx.objectStore("cartas").put(reg);tx.oncomplete=ok;tx.onerror=ok;});}
+function anotarDato(ed,cambios){const a=datos();for(let i=a.length-1;i>=0;i--){if(String(a[i].edicion)===String(ed)){Object.assign(a[i],cambios);break;}}set(LS.datos,JSON.stringify(a));}
+async function imprimirReg(reg){const img=await cargarImg(URL.createObjectURL(reg.carta));if(!img){alert("No se ha podido leer la carta.");return false;}
+  const ok=await enviarAImprimir(dibujarImpresion(img),`nex-${String(reg.edicion).padStart(4,"0")}-impresion.jpg`);
+  if(ok){reg.impresa=(parseInt(reg.impresa)||0)+1;reg.estadoImp="impresa";await guardarReg(reg);anotarDato(reg.edicion,{impresa:reg.impresa});set(LS.impresas,String((parseInt(get(LS.impresas)||"0")||0)+1));}return ok;}
+let cobro={ed:null,metodo:null,volver:"s-qr"};
+async function abrirCobro(ed,volver){const reg=await leerReg(ed);if(!reg){alert("Esta carta no está guardada en el iPad.");return;}
+  cobro={ed,metodo:null,volver:volver||"s-qr"};const n=String(ed).padStart(4,"0");
+  const img=await cargarImg(URL.createObjectURL(reg.carta));const cx=$("cvCobro").getContext("2d");cx.clearRect(0,0,638,1016);if(img)cx.drawImage(img,0,0,638,1016);
+  $("cobroNum").textContent="Fotocarta Nº "+n;const p=get(LS.precio);$("cobroPrecio").textContent=p!==null&&p!==""?euros(p):"Precio: definidlo en Ajustes";
+  document.querySelectorAll("#s-cobro .metodos .btn").forEach(b=>b.classList.remove("sel"));$("pagoInfo").hidden=true;$("btnCobrado").disabled=true;
+  $("btnCobrado").textContent=reg.pago?"🖨 Ya pagada · Imprimir":"✅ Pago recibido · Imprimir";if(reg.pago){$("btnCobrado").disabled=false;cobro.metodo=reg.pago.metodo;}
+  pantalla("s-cobro");}
+document.querySelectorAll("#s-cobro .metodos .btn").forEach(b=>b.onclick=()=>{document.querySelectorAll("#s-cobro .metodos .btn").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");
+  cobro.metodo=b.dataset.m;const n=String(cobro.ed).padStart(4,"0"),info=$("pagoInfo");info.hidden=false;
+  if(cobro.metodo==="efectivo")info.innerHTML="Cobrad en efectivo y pulsad <b>Pago recibido</b>.";
+  else if(cobro.metodo==="bizum"){const t=get(LS.bizum);info.innerHTML=(t?`Bizum al <b>${t.replace(/[<>&]/g,"")}</b>`:"Bizum al número de Icosaria (ponedlo en Ajustes)")+`<br>Concepto: <b>NEX ${n}</b><br><span class="small">Pulsad «Pago recibido» cuando os llegue el aviso del Bizum con ese concepto.</span>`;}
+  else{const l=get(LS.linkPago);if(l){info.innerHTML=`Escanea para pagar con tarjeta<br>Referencia: <b>NEX ${n}</b><canvas id="cvPagoQR" width="400" height="400"></canvas>`;dibujarQR($("cvPagoQR"),l,16);}
+    else info.innerHTML=`Cobrad con el datáfono · Referencia: <b>NEX ${n}</b>`;}
+  $("btnCobrado").disabled=false;});
+$("btnCobrado").onclick=async()=>{const reg=await leerReg(cobro.ed);if(!reg)return;
+  if(!reg.pago){const imp=parseFloat(get(LS.precio)||"0")||0;reg.pago={metodo:cobro.metodo||"efectivo",importe:imp,fecha:new Date().toISOString()};reg.estadoImp="pagada";await guardarReg(reg);
+    anotarDato(reg.edicion,{pago_metodo:reg.pago.metodo,pago_importe:imp});}
+  if(await imprimirReg(reg)){$("btnCobrado").textContent="🖨 Imprimir otra copia";}};
+$("btnPagoLuego").onclick=async()=>{const reg=await leerReg(cobro.ed);if(reg&&!reg.pago){reg.estadoImp="pendiente";await guardarReg(reg);}alert(`Fotocarta Nº ${String(cobro.ed).padStart(4,"0")} en la cola. La encontraréis en Ajustes → Cola de impresión.`);actualizarContador();pantalla("s-inicio");};
+$("btnCobroVolver").onclick=()=>{if(cobro.volver==="s-cola")abrirCola();else pantalla(cobro.volver);};
+async function abrirCola(){const t=(await cartasGuardadas()).sort((a,b)=>b.edicion-a.edicion);const L=$("colaLista");L.innerHTML="";
+  const ventas=t.filter(c=>c.pago);const total=ventas.reduce((s,c)=>s+(parseFloat(c.pago.importe)||0),0);const porM=m=>ventas.filter(c=>c.pago.metodo===m).length;
+  $("colaResumen").textContent=`${t.length} cartas · ${ventas.length} cobradas (${euros(total)}) · efectivo ${porM("efectivo")} · Bizum ${porM("bizum")} · tarjeta ${porM("tarjeta")} · pendientes de pago ${t.filter(c=>c.estadoImp==="pendiente"&&!c.pago).length}`;
+  if(!t.length)L.innerHTML='<p class="small">Todavía no hay cartas guardadas.</p>';
+  for(const c of t){const n=String(c.edicion).padStart(4,"0");const d=document.createElement("div");d.className="item";
+    const est=c.pago?((parseInt(c.impresa)||0)>0?'<span class="est imp">Impresa</span>':'<span class="est pag">Pagada · sin imprimir</span>'):(c.estadoImp==="pendiente"?'<span class="est pend">Pendiente de pago</span>':"");
+    const hora=new Date(c.fecha).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+    d.innerHTML=`<img alt=""><div class="txt"><b>Nº ${n}</b>${est}<br>${(c.personaje||"").replace(/[<>&]/g,"")} · ${hora}${c.pago?` · ${c.pago.metodo} ${euros(c.pago.importe)}`:""}</div>`;
+    d.querySelector("img").src=URL.createObjectURL(c.carta);
+    const b=document.createElement("button");b.className="btn";
+    if(c.pago){b.textContent=(parseInt(c.impresa)||0)>0?"Reimprimir":"Imprimir";b.onclick=async()=>{if(await imprimirReg(c))abrirCola();};}
+    else{b.textContent="Cobrar";b.onclick=()=>abrirCobro(c.edicion,"s-cola");}
+    d.appendChild(b);L.appendChild(d);}
+  pantalla("s-cola");}
+$("btnCola").onclick=abrirCola;
+$("btnColaVolver").onclick=()=>$("btnAjustes").onclick();
+function dibujarCalibracion(){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.width,H=c.height;ctx.fillStyle="#FFFFFF";ctx.fillRect(0,0,W,H);
+  const cols=["#E53935","#FB8C00","#FDD835","#43A047","#1E88E5"];
+  for(let mm=1;mm<=5;mm++){const p=mm*PPMM;ctx.strokeStyle=cols[mm-1];ctx.lineWidth=3;ctx.strokeRect(p,p,W-2*p,H-2*p);
+}
+  const nom=["Rojo","Naranja","Amarillo","Verde","Azul"];ctx.textAlign="left";ctx.font="600 20px -apple-system, Arial";
+  nom.forEach((n,i)=>{const y=366+i*26;ctx.fillStyle=cols[i];ctx.fillRect(170,y-17,40,20);ctx.fillStyle="#000";ctx.fillText(n+" = "+(i+1)+" mm",226,y);});
+  ctx.strokeStyle="#000";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2,H/2-18);ctx.lineTo(W/2,H/2+18);ctx.moveTo(W/2-60,H/2);ctx.lineTo(W/2+60,H/2);ctx.stroke();
+  const g=ctx.createLinearGradient(80,0,W-80,0);["#2B1A12","#6B4430","#A97A5C","#D9B49A","#F6DFCF"].forEach((x,i,a)=>g.addColorStop(i/(a.length-1),x));ctx.fillStyle=g;ctx.fillRect(80,640,W-160,70);
+  ["#C9A35B","#3FD0D4","#14161F","#EFE4CC","#8C6D33","#FFFFFF"].forEach((x,i)=>{ctx.fillStyle=x;ctx.fillRect(80+i*((W-160)/6),730,(W-160)/6-6,70);ctx.strokeStyle="#999";ctx.lineWidth=1;ctx.strokeRect(80+i*((W-160)/6),730,(W-160)/6-6,70);});
+  ctx.fillStyle="#000";ctx.textAlign="center";ctx.font="700 30px -apple-system, Arial";ctx.fillText("Calibración SELPHY",W/2,150);
+  ctx.font="500 21px -apple-system, Arial";["Mirad cuál es el primer marco de color","que se ve COMPLETO en los cuatro lados.","Ese número es el margen de seguridad.","La cruz central debe salir centrada."].forEach((t,i)=>ctx.fillText(t,W/2,200+i*30));
+  ctx.font="500 18px -apple-system, Arial";ctx.fillText("Tonos de piel",W/2,630);ctx.fillText("Colores Icosaria",W/2,830);return c;}
+$("btnImprimir").onclick=async()=>{if(!estado||!estado.edicion){alert("Primero hay que escanear a alguien.");return;}if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}abrirCobro(estado.edicion,"s-qr");};
+$("btnPruebaImp").onclick=async()=>{await enviarAImprimir(dibujarCalibracion(),"nex-calibracion-selphy.jpg");};
 
 /* ===== Compartir / imprimir ===== */
 async function compartir(canvasId,nombre){const c=$(canvasId);
@@ -713,7 +852,7 @@ async function compartir(canvasId,nombre){const c=$(canvasId);
 /* ===== Cartas guardadas en el iPad (IndexedDB) para enviarlas por correo ===== */
 function abrirDB(){return new Promise((ok,ko)=>{const r=indexedDB.open("nex_cartas",1);r.onupgradeneeded=()=>r.result.createObjectStore("cartas",{keyPath:"edicion"});r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);});}
 const aBlob=c=>new Promise(ok=>c.toBlob(ok,"image/jpeg",0.92));
-async function guardarCarta(){try{const db=await abrirDB();const reg={edicion:estado.edicion,codigo:estado.codigo,subida:false,fecha:new Date().toISOString(),mundo:estado.mundo.slug,personaje:(estado.eleccion&&estado.eleccion.nombre)||"",
+async function guardarCarta(){try{const prev=await leerReg(estado.edicion);const db=await abrirDB();const reg={...(prev||{}),edicion:estado.edicion,codigo:estado.codigo,subida:prev?!!prev.subida:false,fecha:new Date().toISOString(),mundo:estado.mundo.slug,personaje:(estado.eleccion&&estado.eleccion.nombre)||"",
     carta:await aBlob($("cvAnverso")),imagen:await aBlob($("cvPortal"))};
   await new Promise((ok,ko)=>{const tx=db.transaction("cartas","readwrite");tx.objectStore("cartas").put(reg);tx.oncomplete=ok;tx.onerror=()=>ko(tx.error);});}catch(e){console.error("No se pudo guardar la carta",e);}}
 /* Subida a Cloudinary (upload preset sin firmar): nex/<código>-carta y nex/<código>-mundo */
@@ -748,7 +887,7 @@ $("btnAjustes").onclick=()=>{const d=datos(),n=d.length,c=t=>d.filter(x=>x.resul
   $("tablaStats").innerHTML=`<tr><td>Escaneos registrados</td><td>${n}</td></tr><tr><td>Aciertos directos</td><td>${c("acierto")} (${pct(c("acierto"))})</td></tr>
    <tr><td>Corregidos con una alternativa</td><td>${c("alternativa")}</td></tr><tr><td>Escritos a mano</td><td>${c("otro")}</td></tr><tr><td>Fotos repetidas</td><td>${c("repetir")}</td></tr>
    <tr><td>Tiempo medio de respuesta</td><td>${media}</td></tr><tr><td>Escaneos en la última hora</td><td>${escaneosUltimaHora()} / ${get(LS.limite)||60}</td></tr>
-   <tr><td>Última carta</td><td>Nº ${String(get(LS.edicion)||0).padStart(4,"0")}</td></tr><tr><td>Fondos de mundos cargados</td><td>${fondos} / 20</td></tr>
+   <tr><td>Última carta</td><td>Nº ${String(get(LS.edicion)||0).padStart(4,"0")}</td></tr><tr><td>Cartas impresas</td><td>${get(LS.impresas)||0}</td></tr><tr><td>Origen de la foto</td><td>${({canon:"Canon",ipad:"Cámara del iPad",ojo:"El Ojo"})[fuente()]}</td></tr><tr><td>Fondos de mundos cargados</td><td>${fondos} / 20</td></tr>
    <tr><td>Cartas guardadas para enviar</td><td id="nCartas">…</td></tr><tr><td>Envío automático (Cloudinary)</td><td>${get(LS.nube)&&get(LS.preset)?"Configurado":"No"}</td></tr><tr><td>Cartas pendientes de subir</td><td id="nPend">…</td></tr><tr><td>Personajes en el catálogo</td><td>${(typeof CATALOGO!=="undefined"?CATALOGO.length:0)}</td></tr><tr><td>Modelo</td><td>${get(LS.model)||"—"}</td></tr>`;pantalla("s-ajustes");cartasGuardadas().then(a=>{const e=$("nCartas");if(e)e.textContent=a.length;const p=$("nPend");if(p)p.textContent=a.filter(c=>!c.subida).length;});};
 $("btnVolver").onclick=()=>arrancar();
 $("btnCompartirCartas").onclick=compartirCartas;
@@ -760,7 +899,7 @@ $("btnProbarOjo").onclick=async()=>{const h=(get(LS.ojo)||"").trim()||(desdeElOj
 $("btnBorrarCartas").onclick=async()=>{if(confirm("¿Borrar las cartas guardadas en este iPad? Hacedlo solo después de haberlas enviado.")){await borrarCartas();$("btnAjustes").onclick();}};
 $("btnCambiarClave").onclick=abrirConfig;
 $("btnBorrar").onclick=()=>{if(confirm("¿Borrar todos los datos de escaneos de este iPad? (No reinicia el número de carta)")){set(LS.datos,"[]");$("btnAjustes").onclick();}};
-$("btnExportar").onclick=()=>{const d=datos();const cols=["fecha","segundos","propuesto","franquicia","confianza","tipo","posible_menor","resultado","elegido","en_catalogo","tono","mundo","rareza","edicion","modelo"];
+$("btnExportar").onclick=()=>{const d=datos();const cols=["fecha","segundos","propuesto","franquicia","confianza","tipo","posible_menor","resultado","elegido","en_catalogo","tono","mundo","rareza","edicion","pago_metodo","pago_importe","impresa","modelo"];
   const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv="\ufeff"+cols.join(";")+"\n"+d.map(r=>cols.map(c=>esc(r[c])).join(";")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`nex-escaneos-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();};
 
