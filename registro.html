@@ -48,17 +48,17 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
     <div class="seccion">Tus datos de viajero</div>
     <label>Nombre<input type="text" id="f_nombre" required autocomplete="given-name"></label>
     <label>Correo electrónico<input type="email" id="f_email" required autocomplete="email"></label>
-    <label>Ciudad<input type="text" id="f_ciudad" autocomplete="address-level2"></label>
+    <label>Ciudad<input type="text" id="f_ciudad" required autocomplete="address-level2"></label>
 
     <div class="seccion">Tu lado friki</div>
-    <label>Tu personaje favorito<input type="text" id="f_personaje" placeholder="El que más te guste, de donde sea"></label>
+    <label>Tu personaje favorito<input type="text" id="f_personaje" required placeholder="El que más te guste, de donde sea"></label>
     <label>Tu universo favorito
-      <select id="f_universo">
+      <select id="f_universo" required>
         <option value="">Elige uno</option><option>Anime y manga</option><option>Cómics y superhéroes</option><option>Videojuegos</option>
         <option>Fantasía</option><option>Ciencia ficción</option><option>Disney y animación</option><option>Juegos de rol y de mesa</option><option>Otro</option>
       </select></label>
     <label>¿Haces cosplay?
-      <select id="f_cosplay">
+      <select id="f_cosplay" required>
         <option value="">Elige una opción</option><option>Sí, siempre que puedo</option><option>A veces</option><option>Todavía no, pero quiero</option><option>No, pero me encanta verlos</option>
       </select></label>
 
@@ -69,7 +69,7 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
       <label class="check"><input type="checkbox" id="f_novedades"> <span>Quiero recibir novedades de Icosaria: eventos, experiencias y sorpresas del multiverso. (Opcional)</span></label>
     </fieldset>
     <div class="legal" id="legal">
-      <b>Protección de datos.</b> Responsable: [RAZÓN SOCIAL Y NIF]. Finalidad: enviarte tu carta (incluye tu fotografía) y, solo si lo marcas, novedades de Icosaria. Base: tu consentimiento. Tus datos se guardan en Brevo y tu carta en Cloudinary. Borraremos tu fotografía [en 30 días]. Puedes ejercer tus derechos escribiendo a [CORREO DE CONTACTO]. Si tienes menos de 14 años, necesitas el consentimiento de tu madre, padre o tutor.
+      <b>Protección de datos.</b> Responsable: Icosaria (info@icosaria.com). Finalidad: enviarte tu carta (incluye tu fotografía) y, solo si lo marcas, novedades de Icosaria. Base: tu consentimiento. Tus datos se guardan en Brevo y tu carta en Cloudinary, que actúan como proveedores de Icosaria. Borraremos tu fotografía en 30 días; tus datos de contacto, cuando nos lo pidas o retires tu consentimiento. Puedes acceder, rectificar, suprimir u oponerte escribiendo a info@icosaria.com, y reclamar ante la Agencia Española de Protección de Datos. Si tienes menos de 14 años, necesitas el consentimiento de tu madre, padre o tutor.
     </div>
     <button type="submit">¡Envíame mi carta!</button>
   </form>
@@ -80,7 +80,7 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
 <script>
 /* ====== CONFIG: rellenar con los datos del formulario de Brevo (ver guía) ====== */
 const CONFIG = {
-  accion: "PEGAR_AQUI_LA_URL_ACTION_DEL_FORMULARIO_DE_BREVO",  // atributo action="" del código HTML del formulario de Brevo
+  accion: "https://7074f0f8.sibforms.com/serve/MUIFAFfr8rymPkPYOEBmHWjA53V466ZX7_pxIqKFhU8LsFWEKwIVYT-balJ_OE3NzHZAysPwo1GiCXsGq7w9fE9RWseSkGJTec9I1aSHven4KeohESaB96GZoz3_yJjLuU-I-rmXcMPYZ8Y4EjciZXewIdoKnhKoPZayZkC1lxZfmskhJz5g3pU-bqr0Lk84dErCjcQB7ztdevmDFg==",  // atributo action="" del código HTML del formulario de Brevo
   campos: {                // nombre de cada campo en Brevo (atributo name="" del código HTML)
     email: "EMAIL",
     nombre: "NOMBRE",
@@ -90,12 +90,20 @@ const CONFIG = {
     cosplay: "COSPLAYER",
     codigo: "CODIGO_CARTA",
     novedades: "NOVEDADES",
-    acepto: "OPT_IN"
+    acepto: ""
   },
-  extras: { locale: "es", html_type: "simple" }   // campos ocultos que añade Brevo
+  extras: { email_address_check: "", locale: "es", html_type: "simple" }   // campos ocultos que añade Brevo
 };
 /* ============================================================================ */
-const codigo = new URLSearchParams(location.search).get("c") || "";
+const P = new URLSearchParams(location.search);
+if(P.get("enviado")){ /* vuelta desde Brevo tras enviar el formulario */
+  document.getElementById("formulario").hidden = true;
+  const g = document.createElement("div"); g.className = "gracias";
+  g.innerHTML = '<h2 style="font-family:Fraunces,Georgia,serif;margin:10px 0">¡Carta en camino!</h2><p>Revisa tu correo en unos minutos (mira también en Promociones o Spam).</p><p>Mientras llega, síguenos y súbela etiquetando a <b>@icosaria</b>.</p><p><a href="https://www.instagram.com/icosaria" style="color:#3FD0D4">Instagram</a> · <a href="https://www.tiktok.com/@icosaria" style="color:#3FD0D4">TikTok</a></p>';
+  document.getElementById("formulario").after(g);
+}
+const codigo = P.get("c") || "";
+if(P.get("enviado")) document.getElementById("aviso").remove();
 if(!/^\d{4}-[A-Z0-9]{6}$/.test(codigo)) document.getElementById("aviso").hidden = false;
 const f = document.getElementById("formulario");
 f.addEventListener("submit", e => {
