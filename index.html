@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.7</title>
+<title>Nex Multiverse Scan · v3.8</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -195,9 +195,13 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <input id="inPreset" type="text" autocomplete="off" placeholder="p. ej. nex_cartas">
   <label for="inFuente">Origen de la foto</label>
   <select id="inFuente" class="sel">
+    <option value="carpeta">Canon conectada al portátil (carpeta de EOS Utility)</option>
     <option value="canon">Cámara Canon (elegir la foto en Fotos)</option>
     <option value="ipad">Cámara del iPad</option>
     <option value="ojo">El Ojo (placa con cámara)</option></select>
+  <div class="stack" id="cajaCarpeta"><button class="btn" id="btnCarpeta" type="button">📁 Elegir la carpeta de EOS Utility</button>
+    <p class="small" id="txtCarpeta">Sin carpeta elegida</p>
+    <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAuto" style="width:24px;height:24px"> Escanear automáticamente al disparar con la Canon</label></div>
   <label for="inPrecio">Precio de la fotocarta impresa (€)</label>
   <input id="inPrecio" type="number" min="0" step="0.5" placeholder="p. ej. 5">
   <label for="inBizum">Bizum: número de teléfono donde cobráis</label>
@@ -315,7 +319,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
     <button class="btn ghost" id="btnPagoLuego">Dejar en la cola (pagará más tarde)</button>
     <button class="btn ghost" id="btnCobroVolver">Volver</button>
   </div>
-  <p class="small">Imprimir: Compartir → «Imprimir» → Canon SELPHY CP1500 · papel tarjeta 54 × 86 mm</p>
+  <p class="small">iPad: Compartir → «Imprimir» → SELPHY CP1500 · Portátil: impresora SELPHY CP1500, papel tarjeta 54 × 86 mm, sin márgenes</p>
 </section>
 
 <section class="screen bg bg-noche" id="s-cola">
@@ -432,7 +436,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 <script src="qrcode.js"></script>
 <script>
 /* ===== Configuración ===== */
-const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir",fuente:"nex_fuente",impMargen:"nex_imp_margen",impX:"nex_imp_x",impY:"nex_imp_y",impresas:"nex_impresas",precio:"nex_precio",bizum:"nex_bizum",linkPago:"nex_link_pago"};
+const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir",fuente:"nex_fuente",impMargen:"nex_imp_margen",impX:"nex_imp_x",impY:"nex_imp_y",impresas:"nex_impresas",precio:"nex_precio",bizum:"nex_bizum",linkPago:"nex_link_pago",auto:"nex_auto"};
 const UMBRAL_ALTO=0.8, UMBRAL_MEDIO=0.5, TIMEOUT_MS=20000, LADO_MAX=2400; /* fotos de la Canon EOS 2000D: se reducen a 2400 px de lado */
 
 /* Los 8 mundos (APG-TEC-004) y sus frases (APG-TEC-005). Fondos opcionales en mundos/<slug>-01.jpg … -03.jpg */
@@ -508,7 +512,7 @@ function guardarDato(d){const a=datos();a.push(d);set(LS.datos,JSON.stringify(a)
 function escaneosUltimaHora(){const h=Date.now()-3600e3;return datos().filter(d=>new Date(d.fecha).getTime()>h).length;}
 function fuente(){return get(LS.fuente)||(desdeElOjo()?"ojo":"canon");}
 function actualizarContador(){const n=datos().length,f=fuente();
-  const pista=f==="canon"?"Haced la foto con la Canon y tocad el Ojo para elegirla":f==="ojo"?"Tocad el Ojo para escanear":"Tocad el Ojo para hacer la foto con el iPad";
+  const pista=f==="carpeta"?(carpeta.ok?(get(LS.auto)!=="0"?"Disparad con la Canon: la foto entra sola":"Disparad con la Canon y tocad el Ojo"):"Tocad el Ojo para conectar la carpeta de EOS Utility"):f==="canon"?"Haced la foto con la Canon y tocad el Ojo para elegirla":f==="ojo"?"Tocad el Ojo para escanear":"Tocad el Ojo para hacer la foto con el iPad";
   $("contador").textContent=(n?`${n} escaneos · `:"")+pista;const l=$("ojoLabel");if(l)l.textContent=f==="canon"?"Escanear foto":"Escanear";}
 
 /* Índice del catálogo por nombre y alias */
@@ -534,18 +538,21 @@ let estado={};
 
 /* ===== Inicio y configuración ===== */
 function arrancar(){ if(!get(LS.key)){abrirConfig();} else {actualizarContador();pantalla("s-inicio");} }
-function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";pantalla("s-config");}
+function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";$("inAuto").checked=get(LS.auto)!=="0";mostrarCarpeta();pantalla("s-config");}
 $("btnGuardar").onclick=()=>{const k=$("inKey").value.trim();if(!k&&!get(LS.key)){$("inKey").focus();return;}
   if(k)set(LS.key,k);set(LS.model,$("inModel").value.trim()||"gemini-3.6-flash");
   set(LS.limite,String(Math.max(1,parseInt($("inLimite").value)||60)));set(LS.repetir,String(Math.min(7,Math.max(0,parseInt($("inRepetir").value)||4))));set(LS.nube,$("inNube").value.trim());set(LS.preset,$("inPreset").value.trim());
   set(LS.ojo,$("inOjo").value.trim().replace(/^https?:\/\//,"").replace(/\/.*$/,""));set(LS.giro,$("inGiro").value);set(LS.formBase,$("inFormBase").value.trim());
   set(LS.fuente,$("inFuente").value);const num=(v,a,b,d)=>{const x=parseFloat(String(v).replace(",","."));return String(isNaN(x)?d:Math.min(b,Math.max(a,x)));};
-  set(LS.impMargen,num($("inMargen").value,0,5,1.5));set(LS.impX,num($("inImpX").value,-3,3,0));set(LS.impY,num($("inImpY").value,-3,3,0));set(LS.precio,$("inPrecio").value.trim()?num($("inPrecio").value,0,999,0):"");set(LS.bizum,$("inBizum").value.trim());set(LS.linkPago,$("inLinkPago").value.trim());
+  set(LS.impMargen,num($("inMargen").value,0,5,1.5));set(LS.impX,num($("inImpX").value,-3,3,0));set(LS.impY,num($("inImpY").value,-3,3,0));set(LS.precio,$("inPrecio").value.trim()?num($("inPrecio").value,0,999,0):"");set(LS.bizum,$("inBizum").value.trim());set(LS.linkPago,$("inLinkPago").value.trim());set(LS.auto,$("inAuto").checked?"1":"0");
   $("inKey").value="";arrancar();};
 let ojoOcupado=false,usarIpadUnaVez=false;
 $("btnEscanear").onclick=async()=>{const lim=parseInt(get(LS.limite)||"60");
   if(escaneosUltimaHora()>=lim){mostrarError(`Se ha llegado al límite de ${lim} escaneos por hora. Esperad un poco o subid el límite en Ajustes.`);return;}
   const f=fuente();
+  if(f==="carpeta"){const ok=await conectarCarpeta(true);if(!ok)return;const n=await fotoMasNueva();
+    if(!n){$("contador").textContent="No hay fotos JPG en la carpeta. Revisad la carpeta de destino de EOS Utility.";return;}
+    carpeta.ultimo=n.clave;analizar(n.file);return;}
   if(f==="canon"){$("fototeca").value="";$("fototeca").click();return;}
   const ojo=f==="ojo"?((get(LS.ojo)||"").trim()||(desdeElOjo()?location.host:"")):"";
   if(ojo&&!usarIpadUnaVez){if(ojoOcupado)return;ojoOcupado=true;$("btnEscanear").classList.add("disparando");$("contador").textContent="El Ojo está escaneando…";
@@ -780,7 +787,13 @@ function dibujarImpresion(origen){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.
   const s=Math.min((W-2*m*PPMM)/W,(H-2*m*PPMM)/H),w=W*s,h=H*s;ctx.imageSmoothingQuality="high";ctx.drawImage(origen,(W-w)/2+dx,(H-h)/2+dy,w,h);return c;}
 function marcarImpresa(ed){const a=datos();let ok=false;for(let i=a.length-1;i>=0;i--){if(String(a[i].edicion)===String(ed)){a[i].impresa=(parseInt(a[i].impresa)||0)+1;ok=true;break;}}
   if(ok)set(LS.datos,JSON.stringify(a));set(LS.impresas,String((parseInt(get(LS.impresas)||"0")||0)+1));}
-async function enviarAImprimir(canvas,nombre){const blob=await new Promise(ok=>canvas.toBlob(ok,"image/jpeg",0.97));const file=new File([blob],nombre,{type:"image/jpeg"});
+const esIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function imprimirEscritorio(canvas){return new Promise(ok=>{const url=canvas.toDataURL("image/jpeg",0.97);const f=document.createElement("iframe");
+  f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";document.body.appendChild(f);const d=f.contentDocument;
+  d.open();d.write('<!doctype html><html><head><style>@page{size:54mm 86mm;margin:0}html,body{margin:0;padding:0}img{display:block;width:54mm;height:86mm}</style></head><body><img id="i"></body></html>');d.close();
+  const i=d.getElementById("i");i.onload=()=>{setTimeout(()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>{f.remove();ok(true);},800);},150);};i.src=url;});}
+async function enviarAImprimir(canvas,nombre){if(!esIOS())return await imprimirEscritorio(canvas);
+  const blob=await new Promise(ok=>canvas.toBlob(ok,"image/jpeg",0.97));const file=new File([blob],nombre,{type:"image/jpeg"});
   if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return true;}catch(e){return false;}}
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nombre;document.body.appendChild(a);a.click();a.remove();return true;}
 /* ===== Cobro e impresión: cada carta guardada en el iPad es un pedido (Nº de carta = referencia del pago) ===== */
@@ -887,7 +900,7 @@ $("btnAjustes").onclick=()=>{const d=datos(),n=d.length,c=t=>d.filter(x=>x.resul
   $("tablaStats").innerHTML=`<tr><td>Escaneos registrados</td><td>${n}</td></tr><tr><td>Aciertos directos</td><td>${c("acierto")} (${pct(c("acierto"))})</td></tr>
    <tr><td>Corregidos con una alternativa</td><td>${c("alternativa")}</td></tr><tr><td>Escritos a mano</td><td>${c("otro")}</td></tr><tr><td>Fotos repetidas</td><td>${c("repetir")}</td></tr>
    <tr><td>Tiempo medio de respuesta</td><td>${media}</td></tr><tr><td>Escaneos en la última hora</td><td>${escaneosUltimaHora()} / ${get(LS.limite)||60}</td></tr>
-   <tr><td>Última carta</td><td>Nº ${String(get(LS.edicion)||0).padStart(4,"0")}</td></tr><tr><td>Cartas impresas</td><td>${get(LS.impresas)||0}</td></tr><tr><td>Origen de la foto</td><td>${({canon:"Canon",ipad:"Cámara del iPad",ojo:"El Ojo"})[fuente()]}</td></tr><tr><td>Fondos de mundos cargados</td><td>${fondos} / 20</td></tr>
+   <tr><td>Última carta</td><td>Nº ${String(get(LS.edicion)||0).padStart(4,"0")}</td></tr><tr><td>Cartas impresas</td><td>${get(LS.impresas)||0}</td></tr><tr><td>Origen de la foto</td><td>${({carpeta:"Canon por cable (EOS Utility)",canon:"Canon (Fotos)",ipad:"Cámara del iPad",ojo:"El Ojo"})[fuente()]}</td></tr><tr><td>Fondos de mundos cargados</td><td>${fondos} / 20</td></tr>
    <tr><td>Cartas guardadas para enviar</td><td id="nCartas">…</td></tr><tr><td>Envío automático (Cloudinary)</td><td>${get(LS.nube)&&get(LS.preset)?"Configurado":"No"}</td></tr><tr><td>Cartas pendientes de subir</td><td id="nPend">…</td></tr><tr><td>Personajes en el catálogo</td><td>${(typeof CATALOGO!=="undefined"?CATALOGO.length:0)}</td></tr><tr><td>Modelo</td><td>${get(LS.model)||"—"}</td></tr>`;pantalla("s-ajustes");cartasGuardadas().then(a=>{const e=$("nCartas");if(e)e.textContent=a.length;const p=$("nPend");if(p)p.textContent=a.filter(c=>!c.subida).length;});};
 $("btnVolver").onclick=()=>arrancar();
 $("btnCompartirCartas").onclick=compartirCartas;
@@ -902,6 +915,31 @@ $("btnBorrar").onclick=()=>{if(confirm("¿Borrar todos los datos de escaneos de 
 $("btnExportar").onclick=()=>{const d=datos();const cols=["fecha","segundos","propuesto","franquicia","confianza","tipo","posible_menor","resultado","elegido","en_catalogo","tono","mundo","rareza","edicion","pago_metodo","pago_importe","impresa","modelo"];
   const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`;const csv="\ufeff"+cols.join(";")+"\n"+d.map(r=>cols.map(c=>esc(r[c])).join(";")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`nex-escaneos-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();};
+
+/* ===== Canon conectada al portátil: lee las fotos de la carpeta donde las guarda EOS Utility (Chrome / Edge en Windows) ===== */
+const carpeta={h:null,ok:false,ultimo:null,previa:null};
+function cfgDB(){return new Promise((ok,ko)=>{const r=indexedDB.open("nex_cfg",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);});}
+async function cfgGet(k){try{const db=await cfgDB();return await new Promise(ok=>{const q=db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null);});}catch(e){return null;}}
+async function cfgSet(k,v){try{const db=await cfgDB();await new Promise(ok=>{const tx=db.transaction("kv","readwrite");tx.objectStore("kv").put(v,k);tx.oncomplete=ok;tx.onerror=ok;});}catch(e){}}
+function mostrarCarpeta(){const t=$("txtCarpeta");if(!t)return;t.textContent=carpeta.h?("Carpeta: "+carpeta.h.name+(carpeta.ok?" ✓":" (tocad el Ojo para dar permiso)")):(window.showDirectoryPicker?"Sin carpeta elegida":"Este navegador no puede leer carpetas: usad Chrome o Edge en el portátil");}
+async function conectarCarpeta(conGesto){
+  if(!window.showDirectoryPicker){alert("Para leer la carpeta de EOS Utility hay que abrir la app en Chrome o Edge en el portátil.");return false;}
+  if(!carpeta.h)carpeta.h=await cfgGet("carpeta");
+  if(!carpeta.h){if(!conGesto)return false;try{carpeta.h=await window.showDirectoryPicker({id:"nex-eos",mode:"read"});await cfgSet("carpeta",carpeta.h);}catch(e){return false;}}
+  let p=await carpeta.h.queryPermission({mode:"read"});if(p!=="granted"&&conGesto){try{p=await carpeta.h.requestPermission({mode:"read"});}catch(e){}}
+  carpeta.ok=p==="granted";if(carpeta.ok&&carpeta.ultimo===null){const n=await fotoMasNueva();carpeta.ultimo=n?n.clave:"";}mostrarCarpeta();actualizarContador();return carpeta.ok;}
+async function fotoMasNueva(){let mejor=null;
+  async function rec(dir,nivel){for await(const [nombre,h] of dir.entries()){
+    if(h.kind==="file"&&/\.(jpe?g)$/i.test(nombre)){const f=await h.getFile();if(!mejor||f.lastModified>mejor.file.lastModified)mejor={file:f,clave:nombre+"|"+f.lastModified+"|"+f.size};}
+    else if(h.kind==="directory"&&nivel<2)await rec(h,nivel+1);}}
+  try{await rec(carpeta.h,0);}catch(e){console.warn("carpeta",e);return null;}return mejor;}
+$("btnCarpeta").onclick=async()=>{if(!window.showDirectoryPicker){mostrarCarpeta();return;}try{carpeta.h=await window.showDirectoryPicker({id:"nex-eos",mode:"read"});await cfgSet("carpeta",carpeta.h);carpeta.ultimo=null;await conectarCarpeta(true);}catch(e){}};
+/* Vigilancia: con la pantalla de inicio abierta, cada foto nueva (tamaño estable) arranca el escaneo sola */
+setInterval(async()=>{try{if(fuente()!=="carpeta"||get(LS.auto)==="0"||!carpeta.ok||!$("s-inicio").classList.contains("on"))return;
+  const n=await fotoMasNueva();if(!n||n.clave===carpeta.ultimo)return;
+  if(carpeta.previa!==n.clave){carpeta.previa=n.clave;return;} /* espera a que EOS Utility termine de escribir el archivo */
+  carpeta.ultimo=n.clave;carpeta.previa=null;analizar(n.file);}catch(e){}},1200);
+cfgGet("carpeta").then(h=>{if(h){carpeta.h=h;conectarCarpeta(false);}});
 
 precargar().finally(()=>{arrancar();setTimeout(()=>{window.precargarSegmentador&&window.precargarSegmentador();},1500);});
 </script>
