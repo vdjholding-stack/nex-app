@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.8</title>
+<title>Nex Multiverse Scan · v3.9</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,6 +98,8 @@ canvas.carta-vista{width:min(62vw,40vh);border-radius:16px}
 .cola .txt{flex:1;text-align:left;font-size:16px}.cola .txt b{font-size:18px}
 .cola .item .btn{width:auto;min-height:48px;font-size:16px;padding:8px 14px}
 .est{display:inline-block;border-radius:8px;padding:1px 8px;font-size:13px;margin-left:6px}
+#chivato{position:fixed;left:6px;bottom:6px;width:7px;height:7px;border-radius:50%;z-index:9;opacity:0;transition:opacity .4s;pointer-events:none}
+.est.reg{background:#3A1E3A;color:#F3B8E8}
 .est.pend{background:#4A2A12;color:#F3C38A}.est.pag{background:#123A2A;color:#8AF3C3}.est.imp{background:#1E2A44;color:#9CC1FF}
 .cartas{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 .qr-marco{background:#F4EBD6;padding:18px;border-radius:16px;border:4px solid #8C6D33;box-shadow:0 0 0 3px #2A2418,0 0 30px rgba(63,208,212,.35),0 18px 40px rgba(0,0,0,.6)}
@@ -176,6 +178,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 </head>
 <body>
 <div class="top-bar"><button class="icon-btn" id="btnAjustes" aria-label="Ajustes">⚙</button></div>
+<div id="chivato"></div>
 
 <section class="screen bg bg-noche" id="s-config">
   <img class="logo-mini" src="img/isologotipo-sinmarco.png" alt="Icosaria">
@@ -202,6 +205,11 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <div class="stack" id="cajaCarpeta"><button class="btn" id="btnCarpeta" type="button">📁 Elegir la carpeta de EOS Utility</button>
     <p class="small" id="txtCarpeta">Sin carpeta elegida</p>
     <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAuto" style="width:24px;height:24px"> Escanear automáticamente al disparar con la Canon</label></div>
+  <label for="inModoImp">Fotocarta impresa</label>
+  <select id="inModoImp" class="sel">
+    <option value="venta">Venta: botón visible y pantalla de cobro</option>
+    <option value="regalo">Regalo sorpresa: sin cobro, se imprime con el gesto secreto</option></select>
+  <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAutoImp" style="width:24px;height:24px"> Regalo: imprimir sola en cuanto aparece la carta (sin gesto)</label>
   <label for="inPrecio">Precio de la fotocarta impresa (€)</label>
   <input id="inPrecio" type="number" min="0" step="0.5" placeholder="p. ej. 5">
   <label for="inBizum">Bizum: número de teléfono donde cobráis</label>
@@ -436,7 +444,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 <script src="qrcode.js"></script>
 <script>
 /* ===== Configuración ===== */
-const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir",fuente:"nex_fuente",impMargen:"nex_imp_margen",impX:"nex_imp_x",impY:"nex_imp_y",impresas:"nex_impresas",precio:"nex_precio",bizum:"nex_bizum",linkPago:"nex_link_pago",auto:"nex_auto"};
+const LS={ojo:"nex_ojo",giro:"nex_ojo_giro",formBase:"nex_form_base",nube:"nex_nube",preset:"nex_preset",cartas:"nex_cartas_db",key:"nex_key",model:"nex_model",limite:"nex_limite",datos:"nex_datos",recientes:"nex_mundos_recientes",edicion:"nex_edicion",repetir:"nex_no_repetir",fuente:"nex_fuente",impMargen:"nex_imp_margen",impX:"nex_imp_x",impY:"nex_imp_y",impresas:"nex_impresas",precio:"nex_precio",bizum:"nex_bizum",linkPago:"nex_link_pago",auto:"nex_auto",modoImp:"nex_modo_imp",autoImp:"nex_auto_imp"};
 const UMBRAL_ALTO=0.8, UMBRAL_MEDIO=0.5, TIMEOUT_MS=20000, LADO_MAX=2400; /* fotos de la Canon EOS 2000D: se reducen a 2400 px de lado */
 
 /* Los 8 mundos (APG-TEC-004) y sus frases (APG-TEC-005). Fondos opcionales en mundos/<slug>-01.jpg … -03.jpg */
@@ -538,13 +546,13 @@ let estado={};
 
 /* ===== Inicio y configuración ===== */
 function arrancar(){ if(!get(LS.key)){abrirConfig();} else {actualizarContador();pantalla("s-inicio");} }
-function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";$("inAuto").checked=get(LS.auto)!=="0";mostrarCarpeta();pantalla("s-config");}
+function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";$("inAuto").checked=get(LS.auto)!=="0";$("inModoImp").value=get(LS.modoImp)||"venta";$("inAutoImp").checked=get(LS.autoImp)==="1";mostrarCarpeta();pantalla("s-config");}
 $("btnGuardar").onclick=()=>{const k=$("inKey").value.trim();if(!k&&!get(LS.key)){$("inKey").focus();return;}
   if(k)set(LS.key,k);set(LS.model,$("inModel").value.trim()||"gemini-3.6-flash");
   set(LS.limite,String(Math.max(1,parseInt($("inLimite").value)||60)));set(LS.repetir,String(Math.min(7,Math.max(0,parseInt($("inRepetir").value)||4))));set(LS.nube,$("inNube").value.trim());set(LS.preset,$("inPreset").value.trim());
   set(LS.ojo,$("inOjo").value.trim().replace(/^https?:\/\//,"").replace(/\/.*$/,""));set(LS.giro,$("inGiro").value);set(LS.formBase,$("inFormBase").value.trim());
   set(LS.fuente,$("inFuente").value);const num=(v,a,b,d)=>{const x=parseFloat(String(v).replace(",","."));return String(isNaN(x)?d:Math.min(b,Math.max(a,x)));};
-  set(LS.impMargen,num($("inMargen").value,0,5,1.5));set(LS.impX,num($("inImpX").value,-3,3,0));set(LS.impY,num($("inImpY").value,-3,3,0));set(LS.precio,$("inPrecio").value.trim()?num($("inPrecio").value,0,999,0):"");set(LS.bizum,$("inBizum").value.trim());set(LS.linkPago,$("inLinkPago").value.trim());set(LS.auto,$("inAuto").checked?"1":"0");
+  set(LS.impMargen,num($("inMargen").value,0,5,1.5));set(LS.impX,num($("inImpX").value,-3,3,0));set(LS.impY,num($("inImpY").value,-3,3,0));set(LS.precio,$("inPrecio").value.trim()?num($("inPrecio").value,0,999,0):"");set(LS.bizum,$("inBizum").value.trim());set(LS.linkPago,$("inLinkPago").value.trim());set(LS.auto,$("inAuto").checked?"1":"0");set(LS.modoImp,$("inModoImp").value);set(LS.autoImp,$("inAutoImp").checked?"1":"0");
   $("inKey").value="";arrancar();};
 let ojoOcupado=false,usarIpadUnaVez=false;
 $("btnEscanear").onclick=async()=>{const lim=parseInt(get(LS.limite)||"60");
@@ -765,7 +773,7 @@ function dibujarReverso(){const c=$("cvReverso"),ctx=c.getContext("2d"),W=638,H=
   texto(ctx,numEd(),W/2,H-58,"600 17px -apple-system, Arial, sans-serif","#6E5426",W-120);
   marco9(ctx,IMG.marco,0,0,W,H,120,70);}
 
-async function mostrarPortal(){if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();dibujarAnverso();$("cvVista").getContext("2d").drawImage($("cvAnverso"),0,0);$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
+async function mostrarPortal(){estado.regalos=0;setTimeout(()=>{if(modoRegalo()&&get(LS.autoImp)==="1"&&$("s-portal").classList.contains("on"))regalo();},1500);if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();dibujarAnverso();$("cvVista").getContext("2d").drawImage($("cvAnverso"),0,0);$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
 function nuevoCodigo(ed){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let r="";const v=new Uint32Array(6);crypto.getRandomValues(v);for(const x of v)r+=a[x%a.length];return String(ed).padStart(4,"0")+"-"+r;}
 const FORM_POR_DEFECTO="https://ojo.icosaria.com/";
 function baseFormulario(){let b=(get(LS.formBase)||"").trim();if(!b)b=location.protocol==="https:"?location.origin+location.pathname.replace(/[^/]*$/,""):FORM_POR_DEFECTO;return b.endsWith("/")?b:b+"/";}
@@ -774,7 +782,7 @@ function dibujarQR(canvas,texto,margen){const ctx=canvas.getContext("2d"),W=canv
   const qr=qrcode(0,"M");qr.addData(texto);qr.make();const n=qr.getModuleCount();const m=margen??0;const t=(W-2*m)/n;ctx.fillStyle="#1B1408";
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))ctx.fillRect(Math.floor(m+c*t),Math.floor(m+r*t),Math.ceil(t),Math.ceil(t));return true;}
 $("btnEnviarCarta").onclick=async()=>{dibujarAnverso();const url=enlaceFormulario();
-  dibujarQR($("cvQR"),url,24);$("qrNum").textContent="Tu carta: "+numEd();$("qrEstado").textContent="";pantalla("s-qr");
+  dibujarQR($("cvQR"),url,24);$("qrNum").textContent="Tu carta: "+numEd();$("btnImprimir").hidden=modoRegalo();$("qrEstado").textContent="";pantalla("s-qr");
   await guardarCarta();subirCarta(estado.codigo).then(ok=>{$("qrEstado").textContent=ok===true?"✓ Carta lista para enviarse":ok===false?"La carta se subirá más tarde (sin conexión)":"";});};
 
 /* ===== Impresión en la Canon SELPHY CP1500 (papel tamaño tarjeta 54 × 86 mm, 300 ppp = 638 × 1016 px) =====
@@ -826,11 +834,11 @@ $("btnCobrado").onclick=async()=>{const reg=await leerReg(cobro.ed);if(!reg)retu
 $("btnPagoLuego").onclick=async()=>{const reg=await leerReg(cobro.ed);if(reg&&!reg.pago){reg.estadoImp="pendiente";await guardarReg(reg);}alert(`Fotocarta Nº ${String(cobro.ed).padStart(4,"0")} en la cola. La encontraréis en Ajustes → Cola de impresión.`);actualizarContador();pantalla("s-inicio");};
 $("btnCobroVolver").onclick=()=>{if(cobro.volver==="s-cola")abrirCola();else pantalla(cobro.volver);};
 async function abrirCola(){const t=(await cartasGuardadas()).sort((a,b)=>b.edicion-a.edicion);const L=$("colaLista");L.innerHTML="";
-  const ventas=t.filter(c=>c.pago);const total=ventas.reduce((s,c)=>s+(parseFloat(c.pago.importe)||0),0);const porM=m=>ventas.filter(c=>c.pago.metodo===m).length;
-  $("colaResumen").textContent=`${t.length} cartas · ${ventas.length} cobradas (${euros(total)}) · efectivo ${porM("efectivo")} · Bizum ${porM("bizum")} · tarjeta ${porM("tarjeta")} · pendientes de pago ${t.filter(c=>c.estadoImp==="pendiente"&&!c.pago).length}`;
+  const regalos=t.filter(c=>c.pago&&c.pago.metodo==="regalo").length;const ventas=t.filter(c=>c.pago&&c.pago.metodo!=="regalo");const total=ventas.reduce((s,c)=>s+(parseFloat(c.pago.importe)||0),0);const porM=m=>ventas.filter(c=>c.pago.metodo===m).length;
+  $("colaResumen").textContent=`${t.length} cartas · ${ventas.length} cobradas (${euros(total)}) · efectivo ${porM("efectivo")} · Bizum ${porM("bizum")} · tarjeta ${porM("tarjeta")} · pendientes de pago ${t.filter(c=>c.estadoImp==="pendiente"&&!c.pago).length} · regalos ${regalos}`;
   if(!t.length)L.innerHTML='<p class="small">Todavía no hay cartas guardadas.</p>';
   for(const c of t){const n=String(c.edicion).padStart(4,"0");const d=document.createElement("div");d.className="item";
-    const est=c.pago?((parseInt(c.impresa)||0)>0?'<span class="est imp">Impresa</span>':'<span class="est pag">Pagada · sin imprimir</span>'):(c.estadoImp==="pendiente"?'<span class="est pend">Pendiente de pago</span>':"");
+    const est=c.pago&&c.pago.metodo==="regalo"?'<span class="est reg">Regalo'+((parseInt(c.impresa)||0)>0?' · impresa':' · sin imprimir')+'</span>':c.pago?((parseInt(c.impresa)||0)>0?'<span class="est imp">Impresa</span>':'<span class="est pag">Pagada · sin imprimir</span>'):(c.estadoImp==="pendiente"?'<span class="est pend">Pendiente de pago</span>':"");
     const hora=new Date(c.fecha).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
     d.innerHTML=`<img alt=""><div class="txt"><b>Nº ${n}</b>${est}<br>${(c.personaje||"").replace(/[<>&]/g,"")} · ${hora}${c.pago?` · ${c.pago.metodo} ${euros(c.pago.importe)}`:""}</div>`;
     d.querySelector("img").src=URL.createObjectURL(c.carta);
@@ -853,6 +861,22 @@ function dibujarCalibracion(){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.widt
   ctx.fillStyle="#000";ctx.textAlign="center";ctx.font="700 30px -apple-system, Arial";ctx.fillText("Calibración SELPHY",W/2,150);
   ctx.font="500 21px -apple-system, Arial";["Mirad cuál es el primer marco de color","que se ve COMPLETO en los cuatro lados.","Ese número es el margen de seguridad.","La cruz central debe salir centrada."].forEach((t,i)=>ctx.fillText(t,W/2,200+i*30));
   ctx.font="500 18px -apple-system, Arial";ctx.fillText("Tonos de piel",W/2,630);ctx.fillText("Colores Icosaria",W/2,830);return c;}
+/* ===== Modo regalo sorpresa: sin cobro; el equipo lanza la impresión con un gesto que el público no ve ===== */
+const modoRegalo=()=>get(LS.modoImp)==="regalo";
+function chivato(color){const c=$("chivato");c.style.background=color;c.style.opacity="1";clearTimeout(chivato.t);chivato.t=setTimeout(()=>c.style.opacity="0",2500);}
+let regaloOcupado=false;
+async function regalo(){if(regaloOcupado||!estado||!estado.edicion||!estado.mundo)return;regaloOcupado=true;chivato("#E3C685");
+  try{if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}const reg=await leerReg(estado.edicion);if(!reg){chivato("#D23C8C");return;}
+    if(!reg.pago){reg.pago={metodo:"regalo",importe:0,fecha:new Date().toISOString()};reg.estadoImp="pagada";await guardarReg(reg);anotarDato(reg.edicion,{pago_metodo:"regalo",pago_importe:0});}
+    const ok=await imprimirReg(reg);estado.regalos=(estado.regalos||0)+(ok?1:0);chivato(ok?"#3FD0D4":"#D23C8C");}
+  catch(e){console.error(e);chivato("#D23C8C");}finally{setTimeout(()=>regaloOcupado=false,3000);}}
+/* Gestos secretos: mantener pulsado 1 s sobre Lumen (pantalla de la carta) o sobre el logo (pantalla del QR), o la tecla I en el portátil */
+function pulsacionLarga(el,fn){let t=null;const fin=()=>{clearTimeout(t);t=null;};
+  el.addEventListener("pointerdown",()=>{fin();t=setTimeout(()=>{t=null;fn();},1000);});["pointerup","pointerleave","pointercancel"].forEach(ev=>el.addEventListener(ev,fin));
+  el.addEventListener("contextmenu",e=>e.preventDefault());el.style.webkitUserSelect="none";el.style.userSelect="none";el.draggable=false;}
+pulsacionLarga(document.querySelector("#s-portal .reaccion"),regalo);
+pulsacionLarga(document.querySelector("#s-qr .logo-mini"),regalo);
+document.addEventListener("keydown",e=>{if((e.key==="i"||e.key==="I")&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|SELECT|TEXTAREA/.test((document.activeElement||{}).tagName||"")&&($("s-portal").classList.contains("on")||$("s-qr").classList.contains("on"))){e.preventDefault();regalo();}});
 $("btnImprimir").onclick=async()=>{if(!estado||!estado.edicion){alert("Primero hay que escanear a alguien.");return;}if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}abrirCobro(estado.edicion,"s-qr");};
 $("btnPruebaImp").onclick=async()=>{await enviarAImprimir(dibujarCalibracion(),"nex-calibracion-selphy.jpg");};
 
