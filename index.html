@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.9</title>
+<title>Nex Multiverse Scan · v3.10</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,17 +205,15 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <div class="stack" id="cajaCarpeta"><button class="btn" id="btnCarpeta" type="button">📁 Elegir la carpeta de EOS Utility</button>
     <p class="small" id="txtCarpeta">Sin carpeta elegida</p>
     <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAuto" style="width:24px;height:24px"> Escanear automáticamente al disparar con la Canon</label></div>
-  <label for="inModoImp">Fotocarta impresa</label>
-  <select id="inModoImp" class="sel">
-    <option value="venta">Venta: botón visible y pantalla de cobro</option>
-    <option value="regalo">Regalo sorpresa: sin cobro, se imprime con el gesto secreto</option></select>
-  <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAutoImp" style="width:24px;height:24px"> Regalo: imprimir sola en cuanto aparece la carta (sin gesto)</label>
+  <p class="small">Fotocarta impresa: siempre regalo sorpresa. Se imprime manteniendo pulsado 1 s sobre Lumen o sobre el logo del QR (o tecla I).</p>
+  <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="inAutoImp" style="width:24px;height:24px"> Imprimir sola en cuanto aparece la carta (sin gesto)</label>
+  <div hidden><select id="inModoImp" class="sel"><option value="regalo">Regalo</option></select>
   <label for="inPrecio">Precio de la fotocarta impresa (€)</label>
   <input id="inPrecio" type="number" min="0" step="0.5" placeholder="p. ej. 5">
   <label for="inBizum">Bizum: número de teléfono donde cobráis</label>
   <input id="inBizum" type="tel" autocomplete="off" placeholder="p. ej. 600 000 000">
   <label for="inLinkPago">Tarjeta: enlace de pago (SumUp, Stripe…) · opcional, se muestra como QR</label>
-  <input id="inLinkPago" type="url" autocomplete="off" autocapitalize="off" placeholder="https://…">
+  <input id="inLinkPago" type="url" autocomplete="off" autocapitalize="off" placeholder="https://…"></div>
   <label for="inMargen">Impresión SELPHY: margen de seguridad (mm)</label>
   <input id="inMargen" type="number" min="0" max="5" step="0.5" value="1.5">
   <div class="fila"><div style="flex:1"><label for="inImpX">Ajuste horizontal (mm)</label><input id="inImpX" type="number" min="-3" max="3" step="0.5" value="0"></div>
@@ -308,8 +306,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <p class="redes">Compártela y etiquétanos en <b>@icosaria</b></p>
   <div class="small" id="qrEstado"></div>
   <div class="stack">
-    <button class="btn primary" id="btnImprimir">🖨 Quiero mi fotocarta impresa</button>
-    <button class="btn" id="btnNuevo">Nuevo escaneo</button>
+    <button class="btn primary" id="btnNuevo">Nuevo escaneo</button>
   </div>
   <div hidden><canvas id="cvAnverso" width="638" height="1016"></canvas><canvas id="cvReverso" width="638" height="1016"></canvas><canvas id="cvImp" width="638" height="1016"></canvas></div>
 </section>
@@ -355,7 +352,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
     <div class="stack">
       <button class="btn" id="btnExportar">Descargar datos (CSV)</button>
       <button class="btn" id="btnCambiarClave">Cambiar clave, modelo o límites</button>
-      <button class="btn primary" id="btnCola">🖨 Cola de impresión y ventas</button>
+      <button class="btn primary" id="btnCola">🖨 Cola de impresión (regalos)</button>
       <button class="btn" id="btnPruebaImp">Imprimir carta de calibración</button>
       <button class="btn" id="btnProbarOjo">Probar el Ojo</button>
       <img id="ojoPrueba" alt="" style="max-width:100%;border-radius:10px;border:2px solid #8C6D33" hidden>
@@ -546,7 +543,7 @@ let estado={};
 
 /* ===== Inicio y configuración ===== */
 function arrancar(){ if(!get(LS.key)){abrirConfig();} else {actualizarContador();pantalla("s-inicio");} }
-function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";$("inAuto").checked=get(LS.auto)!=="0";$("inModoImp").value=get(LS.modoImp)||"venta";$("inAutoImp").checked=get(LS.autoImp)==="1";mostrarCarpeta();pantalla("s-config");}
+function abrirConfig(){$("inModel").value=get(LS.model)||"gemini-3.6-flash";$("inLimite").value=get(LS.limite)||60;$("inRepetir").value=get(LS.repetir)||4;$("inNube").value=get(LS.nube)||"";$("inPreset").value=get(LS.preset)||"";$("inOjo").value=get(LS.ojo)||"";$("inGiro").value=get(LS.giro)||"0";$("inFormBase").value=get(LS.formBase)||"";$("inFuente").value=fuente();$("inMargen").value=get(LS.impMargen)??"1.5";$("inImpX").value=get(LS.impX)||"0";$("inImpY").value=get(LS.impY)||"0";$("inPrecio").value=get(LS.precio)||"";$("inBizum").value=get(LS.bizum)||"";$("inLinkPago").value=get(LS.linkPago)||"";$("inAuto").checked=get(LS.auto)!=="0";$("inModoImp").value="regalo";$("inAutoImp").checked=get(LS.autoImp)==="1";mostrarCarpeta();pantalla("s-config");}
 $("btnGuardar").onclick=()=>{const k=$("inKey").value.trim();if(!k&&!get(LS.key)){$("inKey").focus();return;}
   if(k)set(LS.key,k);set(LS.model,$("inModel").value.trim()||"gemini-3.6-flash");
   set(LS.limite,String(Math.max(1,parseInt($("inLimite").value)||60)));set(LS.repetir,String(Math.min(7,Math.max(0,parseInt($("inRepetir").value)||4))));set(LS.nube,$("inNube").value.trim());set(LS.preset,$("inPreset").value.trim());
@@ -782,7 +779,7 @@ function dibujarQR(canvas,texto,margen){const ctx=canvas.getContext("2d"),W=canv
   const qr=qrcode(0,"M");qr.addData(texto);qr.make();const n=qr.getModuleCount();const m=margen??0;const t=(W-2*m)/n;ctx.fillStyle="#1B1408";
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(qr.isDark(r,c))ctx.fillRect(Math.floor(m+c*t),Math.floor(m+r*t),Math.ceil(t),Math.ceil(t));return true;}
 $("btnEnviarCarta").onclick=async()=>{dibujarAnverso();const url=enlaceFormulario();
-  dibujarQR($("cvQR"),url,24);$("qrNum").textContent="Tu carta: "+numEd();$("btnImprimir").hidden=modoRegalo();$("qrEstado").textContent="";pantalla("s-qr");
+  dibujarQR($("cvQR"),url,24);$("qrNum").textContent="Tu carta: "+numEd();$("qrEstado").textContent="";pantalla("s-qr");
   await guardarCarta();subirCarta(estado.codigo).then(ok=>{$("qrEstado").textContent=ok===true?"✓ Carta lista para enviarse":ok===false?"La carta se subirá más tarde (sin conexión)":"";});};
 
 /* ===== Impresión en la Canon SELPHY CP1500 (papel tamaño tarjeta 54 × 86 mm, 300 ppp = 638 × 1016 px) =====
@@ -862,7 +859,7 @@ function dibujarCalibracion(){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.widt
   ctx.font="500 21px -apple-system, Arial";["Mirad cuál es el primer marco de color","que se ve COMPLETO en los cuatro lados.","Ese número es el margen de seguridad.","La cruz central debe salir centrada."].forEach((t,i)=>ctx.fillText(t,W/2,200+i*30));
   ctx.font="500 18px -apple-system, Arial";ctx.fillText("Tonos de piel",W/2,630);ctx.fillText("Colores Icosaria",W/2,830);return c;}
 /* ===== Modo regalo sorpresa: sin cobro; el equipo lanza la impresión con un gesto que el público no ve ===== */
-const modoRegalo=()=>get(LS.modoImp)==="regalo";
+const modoRegalo=()=>true; /* v3.10: todas las fotocartas son regalo; sin ventas */
 function chivato(color){const c=$("chivato");c.style.background=color;c.style.opacity="1";clearTimeout(chivato.t);chivato.t=setTimeout(()=>c.style.opacity="0",2500);}
 let regaloOcupado=false;
 async function regalo(){if(regaloOcupado||!estado||!estado.edicion||!estado.mundo)return;regaloOcupado=true;chivato("#E3C685");
@@ -877,7 +874,7 @@ function pulsacionLarga(el,fn){let t=null;const fin=()=>{clearTimeout(t);t=null;
 pulsacionLarga(document.querySelector("#s-portal .reaccion"),regalo);
 pulsacionLarga(document.querySelector("#s-qr .logo-mini"),regalo);
 document.addEventListener("keydown",e=>{if((e.key==="i"||e.key==="I")&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|SELECT|TEXTAREA/.test((document.activeElement||{}).tagName||"")&&($("s-portal").classList.contains("on")||$("s-qr").classList.contains("on"))){e.preventDefault();regalo();}});
-$("btnImprimir").onclick=async()=>{if(!estado||!estado.edicion){alert("Primero hay que escanear a alguien.");return;}if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}abrirCobro(estado.edicion,"s-qr");};
+
 $("btnPruebaImp").onclick=async()=>{await enviarAImprimir(dibujarCalibracion(),"nex-calibracion-selphy.jpg");};
 
 /* ===== Compartir / imprimir ===== */
