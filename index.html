@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.11</title>
+<title>Nex Multiverse Scan · v3.12</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,7 +98,16 @@ canvas.carta-vista{width:min(62vw,40vh);border-radius:16px}
 .cola .txt{flex:1;text-align:left;font-size:16px}.cola .txt b{font-size:18px}
 .cola .item .btn{width:auto;min-height:48px;font-size:16px;padding:8px 14px}
 .est{display:inline-block;border-radius:8px;padding:1px 8px;font-size:13px;margin-left:6px}
-#chivato{position:fixed;left:6px;bottom:6px;width:7px;height:7px;border-radius:50%;z-index:9;opacity:0;transition:opacity .4s;pointer-events:none}
+#chivato{position:fixed;left:14px;bottom:14px;width:46px;height:46px;z-index:9;pointer-events:none;color:#7A5E36;opacity:.5;transition:color .4s,opacity .4s}
+#chivato svg{width:100%;height:100%;display:block}
+#chivato.chv-env,#chivato.chv-imp{color:#E3C685;opacity:1}
+#chivato.chv-env svg{animation:chvGira .9s linear infinite}
+#chivato.chv-imp svg{animation:chvGira 3s linear infinite}
+#chivato.chv-ok{color:#3FD0D4;opacity:1}
+#chivato.chv-err{color:#D23C8C;opacity:1}
+#chivato.chv-err svg{animation:chvTiembla .35s ease-in-out 4}
+@keyframes chvGira{to{transform:rotate(360deg)}}
+@keyframes chvTiembla{25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
 .est.reg{background:#3A1E3A;color:#F3B8E8}
 .est.pend{background:#4A2A12;color:#F3C38A}.est.pag{background:#123A2A;color:#8AF3C3}.est.imp{background:#1E2A44;color:#9CC1FF}
 .cartas{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
@@ -178,7 +187,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
 </head>
 <body>
 <div class="top-bar"><button class="icon-btn" id="btnAjustes" aria-label="Ajustes">⚙</button></div>
-<div id="chivato"></div>
+<div id="chivato"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor"><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(0 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(45 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(90 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(135 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(180 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(225 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(270 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(315 24 24)"/><circle cx="24" cy="24" r="15"/></g><circle cx="24" cy="24" r="6" fill="#141826"/></svg></div>
 
 <section class="screen bg bg-noche" id="s-config">
   <img class="logo-mini" src="img/isologotipo-sinmarco.png" alt="Icosaria">
@@ -770,7 +779,7 @@ function dibujarReverso(){const c=$("cvReverso"),ctx=c.getContext("2d"),W=638,H=
   texto(ctx,numEd(),W/2,H-58,"600 17px -apple-system, Arial, sans-serif","#6E5426",W-120);
   marco9(ctx,IMG.marco,0,0,W,H,120,70);}
 
-async function mostrarPortal(){estado.regalos=0;setTimeout(()=>{if(modoRegalo()&&get(LS.autoImp)==="1"&&$("s-portal").classList.contains("on"))regalo();},1500);if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();dibujarAnverso();$("cvVista").getContext("2d").drawImage($("cvAnverso"),0,0);$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
+async function mostrarPortal(){estado.regalos=0;chivatoReposo();setTimeout(()=>{if(modoRegalo()&&get(LS.autoImp)==="1"&&$("s-portal").classList.contains("on"))regalo();},1500);if(estado.recortePromise&&!estado.recorte){await Promise.race([estado.recortePromise,new Promise(r=>setTimeout(r,6000))]);}dibujarPortal();dibujarAnverso();$("cvVista").getContext("2d").drawImage($("cvAnverso"),0,0);$("pTitulo").textContent="¡Error de rumbo!";$("pFrase").textContent="«"+azar(estado.mundo.frases)+"»";pantalla("s-portal");}
 function nuevoCodigo(ed){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let r="";const v=new Uint32Array(6);crypto.getRandomValues(v);for(const x of v)r+=a[x%a.length];return String(ed).padStart(4,"0")+"-"+r;}
 const FORM_POR_DEFECTO="https://ojo.icosaria.com/";
 function baseFormulario(){let b=(get(LS.formBase)||"").trim();if(!b)b=location.protocol==="https:"?location.origin+location.pathname.replace(/[^/]*$/,""):FORM_POR_DEFECTO;return b.endsWith("/")?b:b+"/";}
@@ -860,7 +869,9 @@ function dibujarCalibracion(){const c=$("cvImp"),ctx=c.getContext("2d"),W=c.widt
   ctx.font="500 18px -apple-system, Arial";ctx.fillText("Tonos de piel",W/2,630);ctx.fillText("Colores Icosaria",W/2,830);return c;}
 /* ===== Modo regalo sorpresa: sin cobro; el equipo lanza la impresión con un gesto que el público no ve ===== */
 const modoRegalo=()=>true; /* v3.10: todas las fotocartas son regalo; sin ventas */
-function chivato(color){const c=$("chivato");c.style.background=color;c.style.opacity="1";clearTimeout(chivato.t);chivato.t=setTimeout(()=>c.style.opacity="0",2500);}
+/* Engranaje de estado (solo lo entiende el equipo): bronce quieto = en reposo; dorado girando rápido = enviando; dorado girando lento = imprimiendo (unos 45 s); cian quieto = hecho; magenta = error */
+function chivato(color){const c=$("chivato");clearTimeout(chivato.t);const s=color==="#E3C685"?"chv-env":color==="#3FD0D4"?"chv-imp":"chv-err";c.className=s;if(s==="chv-imp")chivato.t=setTimeout(()=>{c.className="chv-ok";},45000);}
+function chivatoReposo(){clearTimeout(chivato.t);$("chivato").className="";}
 let regaloOcupado=false;
 async function regalo(){if(regaloOcupado||!estado||!estado.edicion||!estado.mundo)return;regaloOcupado=true;chivato("#E3C685");
   try{if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}const reg=await leerReg(estado.edicion);if(!reg){chivato("#D23C8C");return;}
