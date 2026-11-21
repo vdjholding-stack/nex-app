@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.13</title>
+<title>Nex Multiverse Scan · v3.15</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -100,6 +100,17 @@ canvas.carta-vista{width:min(62vw,40vh);border-radius:16px}
 .est{display:inline-block;border-radius:8px;padding:1px 8px;font-size:13px;margin-left:6px}
 #chivato{position:fixed;left:14px;bottom:14px;width:46px;height:46px;z-index:9;pointer-events:none;color:#7A5E36;opacity:.5;transition:color .4s,opacity .4s}
 #chivato svg{width:100%;height:100%;display:block}
+#s-inicio .estado-eq{position:absolute;left:12px;top:12px;z-index:5;pointer-events:none;background:rgba(10,12,20,.78);border:1px solid #5a4a2e;border-radius:14px;padding:10px 12px;min-width:230px;text-align:left}
+.eq-tit{font:700 13px -apple-system,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#E3C685;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.eq-tit span{font-weight:600;text-transform:none;letter-spacing:0;color:#d8cfbb}
+.eq{display:flex;align-items:center;gap:10px;padding:4px 0}
+.eq .rueda{width:30px;height:30px;flex:none;color:#6b6458}
+.eq .rueda svg{width:100%;height:100%;display:block}
+.eq b{display:block;font:700 14px -apple-system,Arial,sans-serif;color:#efe6d2}
+.eq small{display:block;font:500 12px -apple-system,Arial,sans-serif;color:#bfb6a2}
+.eq.ok .rueda{color:#4CD07D}.eq.ok .rueda svg{animation:chvGira 6s linear infinite}
+.eq.av .rueda{color:#E3BE6E}.eq.av .rueda svg{animation:chvGira 2s linear infinite}
+.eq.ko .rueda{color:#E0465A}.eq.ko .rueda svg{animation:chvTiembla .5s ease-in-out infinite}
 #chivato.chv-env,#chivato.chv-imp{color:#E3C685;opacity:1}
 #chivato.chv-env svg{animation:chvGira .9s linear infinite}
 #chivato.chv-imp svg{animation:chvGira 3s linear infinite}
@@ -242,6 +253,7 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <button class="ojo" id="btnEscanear" aria-label="Escanear"></button>
   <div class="ojo-label" id="ojoLabel">Escanear</div>
   <p class="small" id="contador"></p>
+  <div class="estado-eq"><div class="eq-tit">Verificación <span id="eqGlobal"></span></div><div class="eq" id="eqRed"><span class="rueda"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor"><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(0 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(45 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(90 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(135 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(180 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(225 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(270 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(315 24 24)"/><circle cx="24" cy="24" r="15"/></g><circle cx="24" cy="24" r="6" fill="#141826"/></svg></span><div><b>Internet</b><small>Comprobando…</small></div></div><div class="eq" id="eqCam"><span class="rueda"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor"><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(0 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(45 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(90 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(135 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(180 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(225 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(270 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(315 24 24)"/><circle cx="24" cy="24" r="15"/></g><circle cx="24" cy="24" r="6" fill="#141826"/></svg></span><div><b>Cámara</b><small>Comprobando…</small></div></div><div class="eq" id="eqImp"><span class="rueda"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor"><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(0 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(45 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(90 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(135 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(180 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(225 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(270 24 24)"/><rect x="21" y="2" width="6" height="10" rx="1.5" transform="rotate(315 24 24)"/><circle cx="24" cy="24" r="15"/></g><circle cx="24" cy="24" r="6" fill="#141826"/></svg></span><div><b>Impresora</b><small>Comprobando…</small></div></div></div>
   <input id="camara" type="file" accept="image/*" capture="environment" hidden>
   <input id="fototeca" type="file" accept="image/jpeg,image/heic,image/*" hidden>
 </section>
@@ -876,7 +888,7 @@ let regaloOcupado=false;
 async function regalo(){if(regaloOcupado||!estado||!estado.edicion||!estado.mundo)return;regaloOcupado=true;chivato("#E3C685");
   try{if(!(await leerReg(estado.edicion))){dibujarAnverso();await guardarCarta();}const reg=await leerReg(estado.edicion);if(!reg){chivato("#D23C8C");return;}
     if(!reg.pago){reg.pago={metodo:"regalo",importe:0,fecha:new Date().toISOString()};reg.estadoImp="pagada";await guardarReg(reg);anotarDato(reg.edicion,{pago_metodo:"regalo",pago_importe:0});}
-    const ok=await imprimirReg(reg);estado.regalos=(estado.regalos||0)+(ok?1:0);chivato(ok?"#3FD0D4":"#D23C8C");}
+    const ok=await imprimirReg(reg);eq.ultImp=Date.now();eq.okImp=!!ok;estado.regalos=(estado.regalos||0)+(ok?1:0);chivato(ok?"#3FD0D4":"#D23C8C");}
   catch(e){console.error(e);chivato("#D23C8C");}finally{setTimeout(()=>regaloOcupado=false,3000);}}
 /* Gestos secretos: mantener pulsado 1 s sobre Lumen (pantalla de la carta) o sobre el logo (pantalla del QR), o la tecla I en el portátil */
 function pulsacionLarga(el,fn){let t=null;const fin=()=>{clearTimeout(t);t=null;};
@@ -972,6 +984,41 @@ setInterval(async()=>{try{if(fuente()!=="carpeta"||get(LS.auto)==="0"||!carpeta.
   if(carpeta.previa!==n.clave){carpeta.previa=n.clave;return;} /* espera a que EOS Utility termine de escribir el archivo */
   carpeta.ultimo=n.clave;carpeta.previa=null;analizar(n.file);}catch(e){}},1200);
 cfgGet("carpeta").then(h=>{if(h){carpeta.h=h;conectarCarpeta(false);}});
+
+/* ===== Estado del equipo en la pantalla de inicio (v3.14): Internet, Canon (carpeta de EOS Utility) y SELPHY (resultado de la última impresión) ===== */
+const eq={ultImp:0,okImp:null};
+/* Semáforo de verificación (v3.15). Si en el portátil está abierto el monitor «nex-estado» (http://localhost:8787), lee el estado real de la Canon (USB + EOS Utility) y de la SELPHY (responde en la red, errores, cola). Si no, usa lo que la app sabe por sí misma. */
+const MONITOR="http://localhost:8787/estado";
+function pintaEq(id,clase,titulo,detalle){const e=$(id);if(!e)return;e.className="eq "+clase;e.querySelector("b").textContent=titulo;e.querySelector("small").textContent=detalle||"";}
+const haceMin=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?"ahora":"hace "+m+" min";};
+async function revisarEquipo(){try{if(!$("s-inicio").classList.contains("on"))return;
+  let red=false;try{await fetch("https://generativelanguage.googleapis.com/",{mode:"no-cors",cache:"no-store",signal:AbortSignal.timeout(6000)});red=true;}catch(e){}
+  pintaEq("eqRed",red?"ok":"ko","Internet",red?"Conectado":"Sin conexión: revisad el punto de acceso");
+  let mon=null;try{const r=await fetch(MONITOR,{cache:"no-store",signal:AbortSignal.timeout(3000)});if(r.ok)mon=await r.json();}catch(e){}
+  let foto=null;if(fuente()==="carpeta"&&carpeta.ok){const n=await fotoMasNueva();if(n)foto=n.file.lastModified;}
+  const txtFoto=foto?" · última foto "+haceMin(foto):"";
+  if(mon&&mon.camara){const c=mon.camara;
+    if(!c.usb)pintaEq("eqCam","ko","Cámara","Dormida o sin cable: tocad el disparador a medias");
+    else if(!c.eos)pintaEq("eqCam","av","Cámara","Conectada, pero EOS Utility está cerrado");
+    else if(fuente()==="carpeta"&&!carpeta.ok)pintaEq("eqCam","av","Cámara","Falta permiso de la carpeta: tocad el Ojo");
+    else pintaEq("eqCam","ok","Cámara","Conectada"+txtFoto);}
+  else if(fuente()==="carpeta"){if(!carpeta.ok)pintaEq("eqCam","ko","Cámara","Falta permiso de la carpeta: tocad el Ojo");
+    else pintaEq("eqCam",foto&&(Date.now()-foto)<5*60000?"ok":"av","Cámara",(foto?"Última foto "+haceMin(foto):"Sin fotos")+" · haced un disparo de prueba");}
+  else pintaEq("eqCam","ok","Cámara",({canon:"Canon (Fotos)",ipad:"Cámara del iPad",ojo:"El Ojo"})[fuente()]||fuente());
+  const txtImp=eq.ultImp?" · última "+(eq.okImp?"OK ":"con error ")+haceMin(eq.ultImp):"";
+  if(mon&&mon.impresora){const p=mon.impresora;
+    if(!p.instalada)pintaEq("eqImp","ko","Impresora","La SELPHY no está instalada en Windows");
+    else if(p.responde===false||p.offline)pintaEq("eqImp","ko","Impresora","Apagada o fuera del wifi Icosaria");
+    else if(p.error)pintaEq("eqImp","ko","Impresora","Error: "+p.estado+" (papel o cartucho)");
+    else if(p.trabajos>0)pintaEq("eqImp","av","Impresora",p.trabajos+(p.trabajos>1?" cartas":" carta")+" en cola");
+    else if(!p.predeterminada)pintaEq("eqImp","av","Impresora","Lista, pero no es la predeterminada");
+    else pintaEq("eqImp","ok","Impresora","Lista"+txtImp);}
+  else{if(!eq.ultImp)pintaEq("eqImp","av","Impresora","Sin monitor: mirad la pantalla de la SELPHY");
+    else pintaEq("eqImp",eq.okImp?"ok":"ko","Impresora",(eq.okImp?"Última impresión OK ":"Última impresión con error ")+haceMin(eq.ultImp));}
+  const est=["eqRed","eqCam","eqImp"].map(id=>$(id).className);
+  $("eqGlobal").textContent=est.some(c=>c.includes("ko"))?"· revisar":est.some(c=>c.includes("av"))?"· casi listo":"· todo listo"+(mon?"":"");
+}catch(e){console.warn("equipo",e);}}
+setInterval(revisarEquipo,5000);setTimeout(revisarEquipo,2000);
 
 precargar().finally(()=>{arrancar();setTimeout(()=>{window.precargarSegmentador&&window.precargarSegmentador();},1500);});
 </script>
