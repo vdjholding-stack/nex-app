@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&display=swap" rel="stylesheet">
 <style>
-/* Formulario de Nex Multiverse Scan (lead magnet) · v2 · 21/11/2026 (Instagram + preguntas de cosplay)
+/* Formulario de Nex Multiverse Scan (lead magnet) · v2.1 · 21/11/2026 (sin «¿Haces cosplay?»; todo en «Tu lado friki»)
    CONFIGURACIÓN: ver el bloque CONFIG del script al final. */
 :root{--noche:#14161F;--laton:#C9A35B;--laton-osc:#8C6D33;--pergamino:#EFE4CC;--tinta:#3B2A1E;--cian:#3FD0D4;--display:"Fraunces",Georgia,serif;--ui:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
@@ -59,13 +59,7 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
         <option value="">Elige uno</option><option>Anime y manga</option><option>Cómics y superhéroes</option><option>Videojuegos</option>
         <option>Fantasía</option><option>Ciencia ficción</option><option>Disney y animación</option><option>Juegos de rol y de mesa</option><option>Otro</option>
       </select></label>
-    <label>¿Haces cosplay?
-      <select id="f_cosplay" required>
-        <option value="">Elige una opción</option><option>Sí, siempre que puedo</option><option>A veces</option><option>Todavía no, pero quiero</option><option>No, pero me encanta verlos</option>
-      </select></label>
     <label>Tu Instagram <span class="opc">(opcional)</span><input type="text" id="f_instagram" placeholder="@tuusuario" autocomplete="off" autocapitalize="off"></label>
-
-    <div class="seccion">Tu cosplay de hoy</div>
     <label>¿Cuánto tiempo tardaste en hacerlo?
       <select id="f_tiempo">
         <option value="">Elige una opción</option><option>Menos de una semana</option><option>1 o 2 semanas</option><option>3 o 4 semanas</option><option>De 1 a 3 meses</option><option>Más de 3 meses</option><option>No lo hice yo (comprado o regalado)</option>
@@ -143,7 +137,7 @@ f.addEventListener("submit", e => {
   add(CONFIG.campos.ciudad, v("f_ciudad"));
   add(CONFIG.campos.personaje, v("f_personaje"));
   add(CONFIG.campos.universo, v("f_universo"));
-  add(CONFIG.campos.cosplay, v("f_cosplay"));
+  add(CONFIG.campos.cosplay, "Sí (lleva cosplay)"); /* ya no se pregunta: solo escaneamos a gente con cosplay puesto; Brevo tiene este campo como obligatorio */
   add(CONFIG.campos.codigo, codigo);
   add(CONFIG.campos.novedades, document.getElementById("f_novedades").checked ? "true" : "false");
   const ig = v("f_instagram").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").replace(/^@?/, "@");
