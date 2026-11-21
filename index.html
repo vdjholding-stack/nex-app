@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.15</title>
+<title>Nex Multiverse Scan · v3.16</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -273,16 +273,17 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
   <div class="fila-lumen"><img class="lumen-img reaccion" id="lumenResultado" src="img/lumen/entusiasmado.png" alt="Lumen"><h2 id="titular"></h2></div>
   <img class="foto" id="foto" alt="Foto del visitante">
   <div class="personaje" id="nombre"></div>
-  <div class="franquicia" id="franquicia"></div>
-  <div class="chips" id="chips"></div>
-  <div class="conf" id="conf"></div>
+  <div class="franquicia" id="franquicia" style="display:none"></div>
+  <div class="chips" id="chips" style="display:none"></div>
+  <div class="conf" id="conf" style="display:none"></div>
   <div class="aviso" id="avisoMenor" hidden>Posible menor de edad: confirmad el permiso de un adulto antes de seguir.</div>
   <div class="stack" id="opciones"></div>
   <div class="stack" id="otroBox" hidden>
     <input id="inOtro" type="text" placeholder="¿Qué personaje es?" autocomplete="off">
     <button class="btn primary" id="btnOtroOk">Confirmar personaje</button>
   </div>
-  <div class="fila"><button class="btn ghost" id="btnOtro">Otro personaje</button><button class="btn ghost" id="btnRepetir">Repetir foto</button></div>
+  <div class="fila" id="filaRes"><button class="btn ghost" id="btnOtro">Otro personaje</button><button class="btn ghost" id="btnRepetir">Repetir foto</button></div>
+  <div class="stack" id="saltoBox" hidden><button class="btn primary" id="btnSaltar">Devolverte a tu universo</button><button class="btn ghost" id="btnCambiar">Elegir otro personaje</button></div>
 </section>
 
 <section class="screen bg bg-ciudad" id="s-ficha">
@@ -296,7 +297,6 @@ td:last-child{text-align:right;color:var(--laton);font-weight:600}
     <h3>Curiosidad</h3><p id="fCuriosidad" style="max-width:none"></p>
     <h3>Nex dice</h3><div class="cita" id="fFrase"></div>
   </div>
-  <div class="stack"><button class="btn primary" id="btnSaltar">Devolverte a tu universo</button></div>
 </section>
 
 <section class="screen" id="s-salto">
@@ -644,7 +644,7 @@ async function analizar(file){
     mostrarError(msg);}}
 
 /* ===== Resultado ===== */
-function mostrarResultado(r){
+function mostrarResultado(r){$("opciones").dataset.manual="";
   const ch=(r&&r.character)||{};const conf=Number(ch.confidence)||0;const tipo=r.cosplay_type||"";
   if(r.flags&&r.flags.unsafe_content){mostrarError("La foto no se puede usar. Repetidla, por favor.");return;}
   $("foto").src=estado.fotoUrl;$("avisoMenor").hidden=!(r.flags&&r.flags.possible_minor);$("otroBox").hidden=true;$("inOtro").value="";
@@ -661,7 +661,10 @@ function mostrarResultado(r){
   const op=$("opciones");op.innerHTML="";
   if(nombre)op.appendChild(boton(conf>=UMBRAL_ALTO?"¡Sí, soy yo!":`Sí, soy ${nombre}`,"primary",()=>confirmar(nombre,"acierto")));
   (r.alternatives||[]).filter(a=>a&&a.name).slice(0,3).forEach(a=>op.appendChild(boton(`Soy ${a.name}${a.franchise?" ("+a.franchise+")":""}`,"",()=>confirmar(a.name,"alternativa"))));
-  if(!nombre)$("otroBox").hidden=false;pantalla("s-resultado");}
+  if(!nombre)$("otroBox").hidden=false;modoEleccion();pantalla("s-resultado");}
+/* v3.16: sin pantalla de «Registro del mapa de Vela». Tras elegir el personaje, en la misma pantalla aparece «Devolverte a tu universo» */
+function modoEleccion(){$("saltoBox").hidden=true;$("filaRes").hidden=false;$("opciones").hidden=false;}
+$("btnCambiar").onclick=()=>{if($("opciones").dataset.manual==="1"){modoEleccion();$("otroBox").hidden=false;}else mostrarResultado(estado.res);};
 function boton(txt,cls,fn){const b=document.createElement("button");b.className="btn "+cls;b.textContent=txt;b.onclick=fn;return b;}
 $("btnOtro").onclick=()=>{$("otroBox").hidden=false;$("inOtro").focus();};
 $("btnOtroOk").onclick=()=>{const v=$("inOtro").value.trim();if(!v){$("inOtro").focus();return;}confirmar(v,"otro");};
@@ -680,7 +683,7 @@ function confirmar(nombre,resultado){
   if(p){chips("fRasgos",[p.rasgo_1,p.rasgo_2,p.rasgo_3],"laton");chips("fHabilidades",[p.habilidad_1,p.habilidad_2,p.habilidad_3]);$("fCuriosidad").textContent=p.curiosidad;$("fFrase").textContent="«"+azar([p.frase_nex_1,p.frase_nex_2].filter(Boolean))+"»";}
   else{chips("fRasgos",(r.visual_evidence||[]).slice(0,3),"laton");chips("fHabilidades",["Viajar entre mundos","Sorprender a Nex","Posar con estilo"]);
     $("fCuriosidad").textContent="Este viajero aún no está en el mapa de Vela. Hoy entra en la colección.";$("fFrase").textContent="«Interesante… muy interesante. Esto va a mi colección.»";}
-  pantalla("s-ficha");}
+  $("nombre").textContent=p?p.nombre:nombre;$("opciones").hidden=true;$("otroBox").hidden=true;$("filaRes").hidden=true;$("saltoBox").hidden=false;}
 
 /* ===== Lumen elige mundo (APG-TEC-004 §3.1) ===== */
 function elegirMundo(tono){
@@ -936,7 +939,7 @@ function registrar(resultado,elegido){const r=estado.res||{};const ch=r.characte
 function mostrarError(msg){$("errorTxt").textContent=msg;pantalla("s-error");}
 $("btnReintentar").onclick=()=>{if(estado.foto)analizar(estado.foto);else pantalla("s-inicio");};
 $("btnManual").onclick=()=>{estado.res=estado.res||{character:{}};$("foto").src=estado.fotoUrl||"";$("titular").textContent="¿De qué mundo vienes?";
-  $("nombre").textContent="";$("franquicia").textContent="";$("chips").innerHTML="";$("conf").textContent="";$("avisoMenor").hidden=true;$("opciones").innerHTML="";$("otroBox").hidden=false;pantalla("s-resultado");};
+  $("nombre").textContent="";$("franquicia").textContent="";$("chips").innerHTML="";$("conf").textContent="";$("avisoMenor").hidden=true;$("opciones").innerHTML="";$("opciones").dataset.manual="1";modoEleccion();$("otroBox").hidden=false;pantalla("s-resultado");};
 $("btnInicio2").onclick=()=>{actualizarContador();pantalla("s-inicio");};
 $("btnAjustes").onclick=()=>{const d=datos(),n=d.length,c=t=>d.filter(x=>x.resultado===t).length;const conSeg=d.filter(x=>x.segundos>0);
   const media=conSeg.length?(conSeg.reduce((s,x)=>s+x.segundos,0)/conSeg.length).toFixed(1)+" s":"—";const pct=v=>n?Math.round(v*100/n)+" %":"—";
