@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&display=swap" rel="stylesheet">
 <style>
-/* Formulario de Nex Multiverse Scan (lead magnet) · v1 · 01/10/2026
+/* Formulario de Nex Multiverse Scan (lead magnet) · v2 · 21/11/2026 (Instagram + preguntas de cosplay)
    CONFIGURACIÓN: ver el bloque CONFIG del script al final. */
 :root{--noche:#14161F;--laton:#C9A35B;--laton-osc:#8C6D33;--pergamino:#EFE4CC;--tinta:#3B2A1E;--cian:#3FD0D4;--display:"Fraunces",Georgia,serif;--ui:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
 *{box-sizing:border-box}
@@ -22,7 +22,9 @@ h1{font-family:var(--display);font-size:clamp(26px,7vw,34px);line-height:1.15;ma
 form{width:100%;background:url(img/pergamino-ancho.jpg) center/cover;color:var(--tinta);border:3px solid var(--laton-osc);border-radius:18px;padding:22px 18px;
   box-shadow:inset 0 0 40px rgba(90,60,20,.45),0 16px 40px rgba(0,0,0,.6);text-align:left;display:flex;flex-direction:column;gap:14px}
 label{font-weight:600;font-size:15px;display:flex;flex-direction:column;gap:6px}
-input[type=text],input[type=email],select{font:inherit;min-height:50px;border-radius:10px;border:1.5px solid #8C6D33;background:rgba(255,250,236,.9);padding:10px 12px;color:var(--tinta)}
+input[type=text],input[type=email],select,textarea{font:inherit;min-height:50px;border-radius:10px;border:1.5px solid #8C6D33;background:rgba(255,250,236,.9);padding:10px 12px;color:var(--tinta)}
+textarea{min-height:92px;resize:vertical}
+.opc{font-weight:500;font-size:13px;color:#6E5426}
 fieldset{border:none;padding:0;margin:0}
 .check{flex-direction:row;align-items:flex-start;gap:10px;font-weight:500;font-size:14px}
 .check input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:#8C6D33}
@@ -61,6 +63,19 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
       <select id="f_cosplay" required>
         <option value="">Elige una opción</option><option>Sí, siempre que puedo</option><option>A veces</option><option>Todavía no, pero quiero</option><option>No, pero me encanta verlos</option>
       </select></label>
+    <label>Tu Instagram <span class="opc">(opcional)</span><input type="text" id="f_instagram" placeholder="@tuusuario" autocomplete="off" autocapitalize="off"></label>
+
+    <div class="seccion">Tu cosplay de hoy</div>
+    <label>¿Cuánto tiempo tardaste en hacerlo?
+      <select id="f_tiempo">
+        <option value="">Elige una opción</option><option>Menos de una semana</option><option>1 o 2 semanas</option><option>3 o 4 semanas</option><option>De 1 a 3 meses</option><option>Más de 3 meses</option><option>No lo hice yo (comprado o regalado)</option>
+      </select></label>
+    <label>¿Cuánto dinero invertiste en hacerlo?
+      <select id="f_dinero">
+        <option value="">Elige una opción</option><option>Menos de 50 €</option><option>De 50 a 100 €</option><option>De 100 a 250 €</option><option>De 250 a 500 €</option><option>Más de 500 €</option><option>Prefiero no decirlo</option>
+      </select></label>
+    <label>¿Cuál fue la parte que más te costó hacer?<input type="text" id="f_parte" placeholder="La peluca, la armadura, los accesorios…"></label>
+    <label>¿Por qué te identificas con ese personaje o qué es lo que te gusta de él?<textarea id="f_porque" placeholder="Cuéntanoslo con tus palabras"></textarea></label>
 
     <fieldset>
       <label class="check"><input type="checkbox" id="f_acepto" required> <span>He leído la información de protección de datos y acepto que Icosaria use mis datos y mi fotografía para enviarme mi carta.</span></label>
@@ -68,8 +83,11 @@ button{font:inherit;font-weight:700;font-size:19px;min-height:58px;border-radius
     <fieldset>
       <label class="check"><input type="checkbox" id="f_novedades"> <span>Quiero recibir novedades de Icosaria: eventos, experiencias y sorpresas del multiverso. (Opcional)</span></label>
     </fieldset>
+    <fieldset>
+      <label class="check"><input type="checkbox" id="f_mencion"> <span>Podéis publicar mi carta y mencionar mi Instagram en las redes de Icosaria. (Opcional)</span></label>
+    </fieldset>
     <div class="legal" id="legal">
-      <b>Protección de datos.</b> Responsable: Icosaria (info@icosaria.com). Finalidad: enviarte tu carta (incluye tu fotografía) y, solo si lo marcas, novedades de Icosaria. Base: tu consentimiento. Tus datos se guardan en Brevo y tu carta en Cloudinary, que actúan como proveedores de Icosaria. Borraremos tu fotografía en 30 días; tus datos de contacto, cuando nos lo pidas o retires tu consentimiento. Puedes acceder, rectificar, suprimir u oponerte escribiendo a info@icosaria.com, y reclamar ante la Agencia Española de Protección de Datos. Si tienes menos de 14 años, necesitas el consentimiento de tu madre, padre o tutor.
+      <b>Protección de datos.</b> Responsable: Icosaria (info@icosaria.com). Finalidad: enviarte tu carta (incluye tu fotografía); conocer mejor a la comunidad cosplay con tus respuestas; y, solo si lo marcas, enviarte novedades y publicar tu carta mencionando tu Instagram. Base: tu consentimiento. Tus datos se guardan en Brevo y tu carta en Cloudinary, que actúan como proveedores de Icosaria. Borraremos tu fotografía en 30 días; tus datos de contacto, cuando nos lo pidas o retires tu consentimiento. Puedes acceder, rectificar, suprimir u oponerte escribiendo a info@icosaria.com, y reclamar ante la Agencia Española de Protección de Datos. Si tienes menos de 14 años, necesitas el consentimiento de tu madre, padre o tutor.
     </div>
     <button type="submit">¡Envíame mi carta!</button>
   </form>
@@ -90,6 +108,12 @@ const CONFIG = {
     cosplay: "COSPLAYER",
     codigo: "CODIGO_CARTA",
     novedades: "NOVEDADES",
+    instagram: "REDES",
+    mencion: "PERMISO_MENCION",
+    tiempo: "TIEMPO_COSPLAY",
+    dinero: "INVERSION_COSPLAY",
+    parte: "PARTE_DIFICIL",
+    porque: "POR_QUE_PERSONAJE",
     acepto: ""
   },
   extras: { email_address_check: "", locale: "es", html_type: "simple" }   // campos ocultos que añade Brevo
@@ -122,6 +146,13 @@ f.addEventListener("submit", e => {
   add(CONFIG.campos.cosplay, v("f_cosplay"));
   add(CONFIG.campos.codigo, codigo);
   add(CONFIG.campos.novedades, document.getElementById("f_novedades").checked ? "true" : "false");
+  const ig = v("f_instagram").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, "").replace(/^@?/, "@");
+  add(CONFIG.campos.instagram, ig === "@" ? "" : ig);
+  add(CONFIG.campos.mencion, document.getElementById("f_mencion").checked ? "true" : "false");
+  add(CONFIG.campos.tiempo, v("f_tiempo"));
+  add(CONFIG.campos.dinero, v("f_dinero"));
+  add(CONFIG.campos.parte, v("f_parte"));
+  add(CONFIG.campos.porque, v("f_porque"));
   add(CONFIG.campos.acepto, "1");
   Object.entries(CONFIG.extras).forEach(([n, val]) => add(n, val));
   document.body.appendChild(real); real.submit();
