@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.17</title>
+<title>Nex Multiverse Scan · v3.18</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -775,8 +775,11 @@ function dibujarAnverso(){const c=$("cvAnverso"),ctx=c.getContext("2d"),m=estado
   if(estado.recorte){ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();persona(ctx,vx+20,vy+18,vw-40,vh-18,vy+vh);ctx.restore();}else portal(ctx,W/2,vy+vh/2,160,215,estado.fotoImg);
   ctx.save();ctx.lineWidth=3;ctx.strokeStyle="#8C6D33";ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.stroke();ctx.restore();
   /* v3.17: en la carta solo el mundo, el número y @icosaria (sin clase/rareza ni frase) */
-  texto(ctx,m.nombre,W/2,800,"700 46px Fraunces, Georgia, serif","#F6EDD8",W-110);
-  texto(ctx,numEd()+" · @icosaria",W/2,H-58,"600 22px -apple-system, Arial, sans-serif","#C7BDA8",W-120);
+  /* v3.18: mundo + número centrados como bloque entre la foto (y=725) y el borde inferior (y=930) */
+  const fN="700 46px Fraunces, Georgia, serif";ctx.font=fN;let nL=1,lin="";for(const p of String(m.nombre).split(" ")){const pr=lin?lin+" "+p:p;if(ctx.measureText(pr).width>W-110&&lin){nL++;lin=p;}else lin=pr;}
+  const altoN=46*1.2,capN=34,gap=40,capNum=16,total=capN+(nL-1)*altoN+gap+capNum,y0=725+(930-725-total)/2+capN;
+  const yNum=texto(ctx,m.nombre,W/2,y0,fN,"#F6EDD8",W-110)-altoN+gap+capNum;
+  texto(ctx,numEd()+" · @icosaria",W/2,yNum,"600 22px -apple-system, Arial, sans-serif","#C7BDA8",W-120);
   marco9(ctx,IMG.marco,0,0,W,H,120,70);}
 
 function dibujarReverso(){const c=$("cvReverso"),ctx=c.getContext("2d"),W=638,H=1016;
