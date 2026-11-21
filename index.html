@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Nex">
 <meta name="theme-color" content="#14161F">
-<title>Nex Multiverse Scan · v3.16</title>
+<title>Nex Multiverse Scan · v3.17</title>
 <link rel="apple-touch-icon" href="img/isotipo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -774,11 +774,9 @@ function dibujarAnverso(){const c=$("cvAnverso"),ctx=c.getContext("2d"),m=estado
   const vx=64,vy=225,vw=W-128,vh=500;ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();fondoMundo(ctx,m,vx,vy,vw,vh);ctx.restore();
   if(estado.recorte){ctx.save();ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.clip();persona(ctx,vx+20,vy+18,vw-40,vh-18,vy+vh);ctx.restore();}else portal(ctx,W/2,vy+vh/2,160,215,estado.fotoImg);
   ctx.save();ctx.lineWidth=3;ctx.strokeStyle="#8C6D33";ctx.beginPath();ctx.roundRect(vx,vy,vw,vh,18);ctx.stroke();ctx.restore();
-  let y=texto(ctx,m.nombre,W/2,786,"700 40px Fraunces, Georgia, serif","#F6EDD8",W-110);
-  const clase=CLASES[e.tono]||CLASES.epico;
-  y=texto(ctx,clase+" · "+estado.rareza,W/2,y+8,"700 26px -apple-system, Arial, sans-serif","#E3BE6E",W-110);
-  y=texto(ctx,m.carta,W/2,y+6,"italic 600 24px Fraunces, Georgia, serif","#EDE3CC",W-120);
-  texto(ctx,numEd()+" · @icosaria",W/2,H-56,"600 20px -apple-system, Arial, sans-serif","#C7BDA8",W-120);
+  /* v3.17: en la carta solo el mundo, el número y @icosaria (sin clase/rareza ni frase) */
+  texto(ctx,m.nombre,W/2,800,"700 46px Fraunces, Georgia, serif","#F6EDD8",W-110);
+  texto(ctx,numEd()+" · @icosaria",W/2,H-58,"600 22px -apple-system, Arial, sans-serif","#C7BDA8",W-120);
   marco9(ctx,IMG.marco,0,0,W,H,120,70);}
 
 function dibujarReverso(){const c=$("cvReverso"),ctx=c.getContext("2d"),W=638,H=1016;
